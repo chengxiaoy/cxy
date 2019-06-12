@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     img1 = loader('face.jpg', 'extract').unsqueeze(0)
     img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    model = SiameseNetwork(False)
+    model = SiameseNetwork(False).to(device)
     res = model(img1.to(device),img2.to(device)).data.cpu().numpy()
     print(res)
 
