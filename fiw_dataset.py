@@ -30,7 +30,7 @@ def loader(image_file, split):
     else:
         img = torchvision.transforms.CenterCrop(224)(img)
     img = np.array(img, dtype=np.uint8)
-    return transform(img).unsqueeze(0)
+    return transform(img)
 
 
 def get_data():
@@ -39,7 +39,7 @@ def get_data():
     val_famillies = "F09"
 
     all_images = glob(train_folders_path + "*/*/*.jpg")
-
+    all_images = [x.replace('\\','/') for x in all_images]
     train_images = [x for x in all_images if val_famillies not in x]
     val_images = [x for x in all_images if val_famillies in x]
 

@@ -16,28 +16,43 @@ import torch
 import torch.nn.functional as F
 import time
 import copy
+from torch.optim import Adam
+import math
+from torch.optim.lr_scheduler import StepLR
 from fiw_dataset import *
+from torchvision import models
 
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
 
-def get_pretrained_model(include_top=False):
-    N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
+class Config():
+    train_batch_size = 16
+    val_batch_size = 16
 
-    model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
 
-    weight_file = 'resnet50_ft_weight.pkl'
+def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
+    if pretrain_kind == 'vggface2':
+        N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
 
-    utils.load_state_dict(model, weight_file)
-    return model
+        model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
+
+        weight_file = 'resnet50_ft_weight.pkl'
+
+        utils.load_state_dict(model, weight_file)
+        return model
+    elif pretrain_kind == 'imagenet':
+        return nn.Sequential(*list(models.resnet50(pretrained=True).children())[:-2])
+    return None
+
+
 
 
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top)
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
 
-        self.ll1 = nn.Linear(8196, 100)
+        self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
@@ -57,9 +72,11 @@ class SiameseNetwork(nn.Module):
 
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
-        mul2 = torch.mul(output1, output2)
+        # mul2 = torch.mul(output1, output2)
+        #
+        # x = torch.cat([mul1, mul2], 1)
 
-        x = torch.cat([mul1, mul2], 1)
+        x = mul1.view(mul1.size(0), -1)
 
         x = self.ll1(x)
         x = self.relu(x)
@@ -95,12 +112,17 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             running_loss = 0.0
             # Iterate over version5_gray_data_2W_top3-0.7.
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
+                img1 = img1.to(device)
+                img2 = img2.to(device)
+                target = target.to(device)
                 optimizer.zero_grad()
-                output = model(img1, img2)
-                loss = criterion(output, target)
-                loss.backward()
-                running_loss = running_loss + loss.data.cpu().numpy()
-                optimizer.step()
+                with torch.set_grad_enabled(phase == 'train'):
+                    output = model(img1, img2)
+                    loss = criterion(output, target)
+                    running_loss = running_loss + loss.item()
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
 
             epoch_loss = running_loss / len(dataloaders[phase])
 
@@ -125,21 +147,31 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     return model
 
 
-img = loader('face.jpg', 'extract')
-model = SiameseNetwork(False)
-features = model.forward_once(img.to(device)).data.cpu().numpy()
+if __name__ == '__main__':
 
-train, train_map, val, val_map = get_data()
+    img1 = loader('face.jpg', 'extract').unsqueeze(0)
+    img2 = loader('face.jpg', 'extract').unsqueeze(0)
+    model = SiameseNetwork(False)
+    res = model(img1.to(device),img2.to(device)).data.cpu().numpy()
+    print(res)
 
-datasets = {'train': FaceDataSet(train, train_map, 'train'), 'val': FaceDataSet(val, val_map, 'val')}
+    train, train_map, val, val_map = get_data()
 
+    datasets = {'train': FaceDataSet(train, train_map, 'train'), 'val': FaceDataSet(val, val_map, 'val')}
 
-train_dataloader = DataLoader(dataset=datasets['train'], shuffle=True, num_workers=4,
-                                      batch_size=Config.train_batch_size, collate_fn=collate_triples)
+    train_dataloader = DataLoader(dataset=datasets['train'], shuffle=True, num_workers=4,
+                                  batch_size=Config.train_batch_size)
 
-test_dataloader = DataLoader(dataset=test_data, shuffle=True, num_workers=4, batch_size=Config.test_batch_size,
-                                     collate_fn=collate_triples)
+    val_dataloader = DataLoader(dataset=datasets['val'], shuffle=True, num_workers=4,
+                                batch_size=Config.val_batch_size)
+    data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
+    criterion = F.binary_cross_entropy
 
+    optimizer = Adam(model.parameters())
 
-print(features.shape)
+    exp_decay = math.exp(-0.01)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+
+    train_model(model, criterion, optimizer, scheduler, data_loaders)
+
