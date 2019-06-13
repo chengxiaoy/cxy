@@ -26,8 +26,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 64
+    val_batch_size = 64
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
@@ -110,7 +110,6 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
-            # Iterate over version5_gray_data_2W_top3-0.7.
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 img1 = img1.to(device)
                 img2 = img2.to(device)
