@@ -122,7 +122,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         loss.backward()
                         optimizer.step()
                     running_loss = running_loss + loss.item()
-                    output = output.data.cpu.numpy()
+                    output = output.data.cpu().numpy()
                     label = output > 0.5
                     for i, j in zip(label, target.data.cpu.numpy()):
                         if i[0] == j[1]:
