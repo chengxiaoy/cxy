@@ -53,7 +53,7 @@ class SiameseNetwork(nn.Module):
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(0.3)
         self.ll2 = nn.Linear(100, 1)
 
     def forward_once(self, x):
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     criterion = F.binary_cross_entropy
 
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = Adam(model.parameters(), lr=0.00001,weight_decay=0.01)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
