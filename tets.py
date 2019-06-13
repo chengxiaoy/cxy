@@ -53,7 +53,7 @@ class SiameseNetwork(nn.Module):
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.01)
+        self.dropout = nn.Dropout(0.1)
         self.ll2 = nn.Linear(100, 1)
 
     def forward_once(self, x):
@@ -158,6 +158,7 @@ if __name__ == '__main__':
     img1 = loader('face.jpg', 'extract').unsqueeze(0)
     img2 = loader('face.jpg', 'extract').unsqueeze(0)
     model = SiameseNetwork(False).to(device)
+
     res = model(img1.to(device), img2.to(device)).data.cpu().numpy()
     print(res)
 

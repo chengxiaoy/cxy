@@ -26,6 +26,7 @@ def loader(image_file, split):
     img = torchvision.transforms.Resize(256)(img)
     if split == 'train':
         img = torchvision.transforms.RandomCrop(224)(img)
+        img = torchvision.transforms.RandomHorizontalFlip(0.5)(img)
         img = torchvision.transforms.RandomGrayscale(p=0.2)(img)
     else:
         img = torchvision.transforms.CenterCrop(224)(img)
