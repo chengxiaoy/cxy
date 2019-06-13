@@ -45,8 +45,6 @@ def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
     return None
 
 
-
-
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
@@ -110,6 +108,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
+            running_corrects = 0
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 img1 = img1.to(device)
                 img2 = img2.to(device)
@@ -118,14 +117,21 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 with torch.set_grad_enabled(phase == 'train'):
                     output = model(img1, img2)
                     loss = criterion(output, target)
-                    running_loss = running_loss + loss.item()
+
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+                    running_loss = running_loss + loss.item()
+                    output = output.data.cpu.numpy()
+                    label = output > 0.5
+                    for i, j in zip(label, target.data.cpu.numpy()):
+                        if i[0] == j[1]:
+                            running_corrects += 1
 
             epoch_loss = running_loss / len(dataloaders[phase])
+            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
-            print('{} Loss: {:.4f} '.format(phase, epoch_loss))
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
             if phase == 'val' and epoch_loss < min_loss:
@@ -147,11 +153,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
 
 if __name__ == '__main__':
-
     img1 = loader('face.jpg', 'extract').unsqueeze(0)
     img2 = loader('face.jpg', 'extract').unsqueeze(0)
     model = SiameseNetwork(False).to(device)
-    res = model(img1.to(device),img2.to(device)).data.cpu().numpy()
+    res = model(img1.to(device), img2.to(device)).data.cpu().numpy()
     print(res)
 
     train, train_map, val, val_map = get_data()
@@ -160,6 +165,8 @@ if __name__ == '__main__':
 
     train_dataloader = DataLoader(dataset=datasets['train'], shuffle=True, num_workers=4,
                                   batch_size=Config.train_batch_size)
+
+    print(len(train_dataloader))
 
     val_dataloader = DataLoader(dataset=datasets['val'], shuffle=True, num_workers=4,
                                 batch_size=Config.val_batch_size)
@@ -173,4 +180,3 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
-
