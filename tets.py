@@ -125,7 +125,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     output = output.data.cpu().numpy()
                     label = output > 0.5
                     for i, j in zip(label, target.data.cpu().numpy()):
-                        if i[0] == j[1]:
+                        if i[0] == j[0]:
                             running_corrects += 1
 
             epoch_loss = running_loss / len(dataloaders[phase])
