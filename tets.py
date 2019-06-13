@@ -92,6 +92,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
+    min_acc = float('inf')
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -138,13 +139,16 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 min_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
 
+            if phase == 'val' and epoch_acc < min_acc:
+                min_acc = epoch_acc
+
         scheduler.step()
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('min loss : {:4f}'.format(min_loss))
-
+    print('min acc : {:4f}'.format(min_acc))
     # load best model weights
     model.load_state_dict(best_model_wts)
 
