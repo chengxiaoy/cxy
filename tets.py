@@ -138,6 +138,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 min_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
 
+        scheduler.step()
+
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
@@ -174,7 +176,7 @@ if __name__ == '__main__':
 
     criterion = F.binary_cross_entropy
 
-    optimizer = Adam(model.parameters())
+    optimizer = Adam(model.parameters(), lr=0.00001)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
