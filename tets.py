@@ -22,6 +22,10 @@ from torch.optim.lr_scheduler import StepLR
 from fiw_dataset import *
 from torchvision import models
 import joblib
+from tensorboardX import SummaryWriter
+import torchvision.utils as vutils
+
+writer = SummaryWriter()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -52,6 +56,7 @@ class SiameseNetwork(nn.Module):
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
 
         self.ll1 = nn.Linear(8192, 100)
+        self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.5)
@@ -61,8 +66,21 @@ class SiameseNetwork(nn.Module):
         x = self.pretrained_model(x)
         return x
 
-    def forward(self, input1, input2):
+    def forward(self, input1, input2, visual_info):
+        return self.forward_baseline(input1, input2, visual_info)
+
+    def forward_baseline(self, input1, input2, visual_info):
+        """
+        baseline op for compare two input
+        :param input1:
+        :param input2:
+        :return:
+        """
         output1 = self.forward_once(input1)
+        if visual_info[0]:
+            x = vutils.make_grid(output1, normalize=True, scale_each=True)
+            writer.add_image('Image', x, visual_info[1])
+
         output2 = self.forward_once(input2)
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
@@ -72,12 +90,37 @@ class SiameseNetwork(nn.Module):
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
         mul2 = torch.mul(output1, output2)
-
         x = torch.cat([mul1, mul2], 1)
-
         x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.ll2(x)
+        x = self.sigmod(x)
+        return x
+
+    def forward_bilinear(self, input1, input2):
+        """
+        the output size of bilinear is related to channel_size**2
+        the linear params after bilinear op maybe very huge
+        :param input1:
+        :param input2:
+        :return:
+        """
+        output1 = self.forward_once(input1)
+        h, w = output1.shape[2], output1.shape[3]
+        c = output1.shape[1]
+        output1 = output1.view(-1, c, h * w)
+
+        output2 = self.forward_once(input2)
+        output2 = output2.view(-1, c, h * w)
+
+        output = torch.matmul(output1, output2.permute(0, 2, 1)).view(-1, c * c) / (h * w)
+        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-5)
+        output = F.normalize(output_sqrt, dim=1)
+        x = output
+        x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
@@ -94,7 +137,6 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    epoch_info = {}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -117,7 +159,11 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 target = target.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    output = model(img1, img2)
+                    vision_info = [False, epoch]
+                    if phase == 'val' and i == 10:
+                        vision_info[0] = True
+                        vision_info[1] = i * epoch
+                    output = model(img1, img2, vision_info)
                     loss = criterion(output, target)
 
                     if phase == 'train':
@@ -133,17 +179,18 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = running_corrects / len(dataloaders[phase].dataset)
 
-            epoch_info[epoch] = {'loss': epoch_loss, 'acc': epoch_acc}
+            writer.add_scalar('data/loss', epoch_loss, epoch)
+            writer.add_scalar('data/loss', epoch_acc, epoch)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
             if phase == 'val' and epoch_loss < min_loss:
                 min_loss = epoch_loss
-                best_model_wts = copy.deepcopy(model.state_dict())
 
             if phase == 'val' and epoch_acc > max_acc:
                 max_acc = epoch_acc
+                best_model_wts = copy.deepcopy(model.state_dict())
 
         scheduler.step()
 
@@ -157,7 +204,6 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
     # save model
     torch.save(model.state_dict(), str(model) + ".pth")
-    joblib.dump(epoch_info, "epoch_info" + str(time.time()) + ".pkl")
 
     return model
 
@@ -167,7 +213,9 @@ if __name__ == '__main__':
     img2 = loader('face.jpg', 'extract').unsqueeze(0)
     model = SiameseNetwork(False).to(device)
 
-    res = model(img1.to(device), img2.to(device)).data.cpu().numpy()
+    # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
+
+    res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()
     print(res)
 
     train, train_map, val, val_map = get_data()
