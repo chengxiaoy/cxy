@@ -21,6 +21,7 @@ import math
 from torch.optim.lr_scheduler import StepLR
 from fiw_dataset import *
 from torchvision import models
+import joblib
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -92,8 +93,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
-    min_acc = float('inf')
-
+    max_acc = 0.0
+    epoch_info = {}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -132,6 +133,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = running_corrects / len(dataloaders[phase].dataset)
 
+            epoch_info[epoch] = {'loss': epoch_loss, 'acc': epoch_acc}
+
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
@@ -139,8 +142,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 min_loss = epoch_loss
                 best_model_wts = copy.deepcopy(model.state_dict())
 
-            if phase == 'val' and epoch_acc < min_acc:
-                min_acc = epoch_acc
+            if phase == 'val' and epoch_acc > max_acc:
+                max_acc = epoch_acc
 
         scheduler.step()
 
@@ -148,12 +151,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('min loss : {:4f}'.format(min_loss))
-    print('min acc : {:4f}'.format(min_acc))
+    print('max acc : {:4f}'.format(max_acc))
     # load best model weights
     model.load_state_dict(best_model_wts)
 
     # save model
     torch.save(model.state_dict(), str(model) + ".pth")
+    joblib.dump(epoch_info, "epoch_info" + str(time.time()) + ".pkl")
 
     return model
 
@@ -181,7 +185,7 @@ if __name__ == '__main__':
 
     criterion = F.binary_cross_entropy
 
-    optimizer = Adam(model.parameters(), lr=0.00001,weight_decay=0.1)
+    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.1)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
