@@ -181,8 +181,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             epoch_loss[phase] = running_loss / len(dataloaders[phase])
             epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
 
-            writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
-            writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
+
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc), epoch)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
@@ -194,7 +193,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             if phase == 'val' and epoch_acc[phase] > max_acc:
                 max_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-
+        writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
+        writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
         scheduler.step()
 
     time_elapsed = time.time() - since
