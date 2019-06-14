@@ -141,6 +141,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
+        epoch_loss = {}
+        epoch_acc = {}
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
             # model.eval()
@@ -176,20 +178,20 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         if i[0] == j[0]:
                             running_corrects += 1
 
-            epoch_loss = running_loss / len(dataloaders[phase])
-            epoch_acc = running_corrects / len(dataloaders[phase].dataset)
+            epoch_loss[phase] = running_loss / len(dataloaders[phase])
+            epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
 
-            if phase == 'val':
-                writer.add_scalar('data/loss', epoch_loss, epoch)
-                writer.add_scalar('data/acc', epoch_acc, epoch)
+            writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
+            writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
 
+            writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc), epoch)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
-            if phase == 'val' and epoch_loss < min_loss:
+            if phase == 'val' and epoch_loss[phase] < min_loss:
                 min_loss = epoch_loss
 
-            if phase == 'val' and epoch_acc > max_acc:
+            if phase == 'val' and epoch_acc[phase] > max_acc:
                 max_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
