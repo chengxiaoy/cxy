@@ -180,7 +180,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             epoch_acc = running_corrects / len(dataloaders[phase].dataset)
 
             writer.add_scalar('data/loss', epoch_loss, epoch)
-            writer.add_scalar('data/loss', epoch_acc, epoch)
+            writer.add_scalar('data/acc', epoch_acc, epoch)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
