@@ -78,7 +78,7 @@ class SiameseNetwork(nn.Module):
         """
         output1 = self.forward_once(input1)
         if visual_info[0]:
-            x = vutils.make_grid(output1, normalize=True, scale_each=True)
+            x = vutils.make_grid(output1[:, :3, :, :], normalize=True, scale_each=True)
             writer.add_image('Image', x, visual_info[1])
 
         output2 = self.forward_once(input2)
