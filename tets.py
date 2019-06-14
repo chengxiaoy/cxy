@@ -187,10 +187,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
             # deep copy the model
             if phase == 'val' and epoch_loss[phase] < min_loss:
-                min_loss = epoch_loss
+                min_loss = epoch_loss[phase]
 
             if phase == 'val' and epoch_acc[phase] > max_acc:
-                max_acc = epoch_acc
+                max_acc = epoch_acc[phase]
                 best_model_wts = copy.deepcopy(model.state_dict())
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
