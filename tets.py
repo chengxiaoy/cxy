@@ -75,7 +75,7 @@ class SiameseNetwork(nn.Module):
 
         x = torch.cat([mul1, mul2], 1)
 
-        x = mul1.view(x.size(0), -1)
+        x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
         x = self.relu(x)
