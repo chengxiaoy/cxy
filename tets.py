@@ -51,7 +51,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
 
-        self.ll1 = nn.Linear(4096, 100)
+        self.ll1 = nn.Linear(8192, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.5)
@@ -71,11 +71,11 @@ class SiameseNetwork(nn.Module):
 
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
-        # mul2 = torch.mul(output1, output2)
-        #
-        # x = torch.cat([mul1, mul2], 1)
+        mul2 = torch.mul(output1, output2)
 
-        x = mul1.view(mul1.size(0), -1)
+        x = torch.cat([mul1, mul2], 1)
+
+        x = mul1.view(x.size(0), -1)
 
         x = self.ll1(x)
         x = self.relu(x)
