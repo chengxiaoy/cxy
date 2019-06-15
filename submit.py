@@ -32,8 +32,8 @@ for batch in tqdm(chunker(submission.img_pair.values)):
     res = model(default_collate(X1).to(device), default_collate(X2).to(device), [False, 0])
     res = res.data.cpu().numpy()
     res = np.squeeze(res)
-
-    predictions += res > 0.5
+    pred = res > 0.5
+    predictions += pred.tolist()
 
 submission['is_related'] = predictions
 
