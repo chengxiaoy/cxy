@@ -35,6 +35,7 @@ for batch in tqdm(chunker(submission.img_pair.values)):
     pred = res > 0.5
     predictions += pred.tolist()
 
+predictions = np.array(predictions).astype(float)
 submission['is_related'] = predictions
 
 submission.to_csv("vgg_face.csv", index=False)
