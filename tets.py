@@ -31,8 +31,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 32
+    val_batch_size = 32
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
@@ -53,7 +53,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(8192, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
@@ -237,12 +237,12 @@ if __name__ == '__main__':
 
     criterion = F.binary_cross_entropy
 
-    optim_params = []
-    for name, params in model.named_parameters():
-        if name.startswith('pretrained_model.7') or name.startswith('ll'):
-            optim_params.append(params)
+    # optim_params = []
+    # for name, params in model.named_parameters():
+    #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
+    #         optim_params.append(params)
 
-    optimizer = Adam(optim_params, lr=0.00001, weight_decay=0.01)
+    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.01)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
