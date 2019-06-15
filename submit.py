@@ -28,7 +28,7 @@ for batch in tqdm(chunker(submission.img_pair.values)):
     X2 = [x.split("-")[1] for x in batch]
     X2 = [loader(test_path + x, 'extract') for x in X2]
 
-    res = model(torch.Tensor(X1).to(device), torch.Tensor(X2).to(device), [False, 0])
+    res = model(torch.Tensor(np.array(X1)).to(device), torch.Tensor(np.array(X2)).to(device), [False, 0])
     res = res.data.cpu().numpy()
     res = np.squeeze(res)
 
