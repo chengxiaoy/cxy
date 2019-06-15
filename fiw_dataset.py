@@ -98,4 +98,6 @@ class FaceDataSet(Dataset):
         return length
 
     def __len__(self):
+        if self.kind == 'train':
+            return self.length*2
         return self.length
