@@ -84,8 +84,8 @@ class SiameseNetwork(nn.Module):
         output2 = self.forward_once(input2)
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
-        output1 = torch.cat([globalmax(output1), globalavg(output1)], 1)
-        output2 = torch.cat([globalmax(output2), globalavg(output2)], 1)
+        output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
+        output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
 
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.01)
+    optimizer = Adam(model.parameters(), lr=0.00001)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
