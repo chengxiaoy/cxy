@@ -51,11 +51,9 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, include_top=False, extract=False):
+    def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
-        if extract == True:
-            self.pretrained_model.load_state_dict(torch.load('SiameseNetwork.pth'))
         self.ll1 = nn.Linear(8192, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
