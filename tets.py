@@ -31,11 +31,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 32
-    val_batch_size = 32
+    train_batch_size = 2
+    val_batch_size = 2
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
+def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
 
