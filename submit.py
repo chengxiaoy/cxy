@@ -14,7 +14,7 @@ def chunker(seq, size=32):
 
 from tqdm import tqdm
 
-submission = pd.read_csv('../Faces_in_the_Wild/sample_submission.csv')
+submission = pd.read_csv('Faces_in_the_Wild/sample_submission.csv')
 
 predictions = []
 model = SiameseNetwork(False).to(device).eval()
