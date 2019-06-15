@@ -3,7 +3,7 @@ from fiw_dataset import *
 from tets import *
 import torch
 
-test_path = "../input/test/"
+test_path = "Faces_in_the_Wild/test/"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
