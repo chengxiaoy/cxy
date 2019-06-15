@@ -46,7 +46,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
         utils.load_state_dict(model, weight_file)
         return model
     elif pretrain_kind == 'imagenet':
-        return nn.Sequential(*list(models.resnet34(pretrained=True).children())[:-2])
+        return nn.Sequential(*list(models.resnet50(pretrained=True).children())[:-2])
     return None
 
 
@@ -54,10 +54,7 @@ class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
-        # self.ll1 = nn.Linear(8192, 100)
-
-        self.ll1 = nn.Linear(2048, 100)
-
+        self.ll1 = nn.Linear(8192, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
@@ -240,7 +237,12 @@ if __name__ == '__main__':
 
     criterion = F.binary_cross_entropy
 
-    optimizer = Adam(model.parameters(), lr=0.00001,weight_decay=0.01)
+    optim_params = []
+    for name, params in model.named_parameters():
+        if name.startswith('pretrained_model.7') or name.startswith('ll'):
+            optim_params.append(params)
+
+    optimizer = Adam(optim_params, lr=0.00001, weight_decay=0.01)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
