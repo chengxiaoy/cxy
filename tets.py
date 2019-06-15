@@ -56,7 +56,7 @@ class SiameseNetwork(nn.Module):
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
         # self.ll1 = nn.Linear(8192, 100)
         self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(4194304, 100)
+        # self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
