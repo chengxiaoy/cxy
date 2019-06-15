@@ -2,6 +2,7 @@ import pandas as pd
 from fiw_dataset import *
 from tets import *
 import torch
+from torch.utils.data.dataloader import default_collate
 
 test_path = "Faces_in_the_Wild/test/"
 
@@ -28,7 +29,7 @@ for batch in tqdm(chunker(submission.img_pair.values)):
     X2 = [x.split("-")[1] for x in batch]
     X2 = [loader(test_path + x, 'extract') for x in X2]
 
-    res = model(torch.Tensor(np.array(X1)).to(device), torch.Tensor(np.array(X2)).to(device), [False, 0])
+    res = model(default_collate(X1).to(device), default_collate(X2).to(device), [False, 0])
     res = res.data.cpu().numpy()
     res = np.squeeze(res)
 
