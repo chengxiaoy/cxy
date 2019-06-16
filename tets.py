@@ -31,8 +31,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 64
-    val_batch_size = 64
+    train_batch_size = 16
+    val_batch_size = 16
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
@@ -255,6 +255,6 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10, factor=0.1)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
