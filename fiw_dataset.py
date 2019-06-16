@@ -76,7 +76,7 @@ class FaceDataSet(Dataset):
     def __getitem__(self, index):
 
         should_same = choice([0, 1])
-        p1, p2 = self.relations[index]
+        p1, p2 = self.relations[index % len(self.relations)]
         if should_same:
             img1 = loader(choice(self.label_images_map[p1]), self.kind)
             img2 = loader(choice(self.label_images_map[p2]), self.kind)
