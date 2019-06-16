@@ -20,7 +20,7 @@ submission = pd.read_csv('Faces_in_the_Wild/sample_submission.csv')
 predictions = []
 model = SiameseNetwork(False).to(device).eval()
 
-model.load_state_dict(torch.load('SiameseNetwork_0.58.pth'))
+model.load_state_dict(torch.load('SiameseNetwork.pth'))
 
 for batch in tqdm(chunker(submission.img_pair.values)):
     X1 = [x.split("-")[0] for x in batch]
