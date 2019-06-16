@@ -41,7 +41,7 @@ def get_data():
     val_famillies = "F09"
 
     all_images = glob(train_folders_path + "*/*/*.jpg")
-    all_images = [x.replace('\\','/') for x in all_images]
+    all_images = [x.replace('\\', '/') for x in all_images]
     train_images = [x for x in all_images if val_famillies not in x]
     val_images = [x for x in all_images if val_famillies in x]
 
@@ -76,19 +76,17 @@ class FaceDataSet(Dataset):
     def __getitem__(self, index):
 
         should_same = choice([0, 1])
+        p1, p2 = self.relations[index]
         if should_same:
-            p1, p2 = choice(self.relations)
             img1 = loader(choice(self.label_images_map[p1]), self.kind)
             img2 = loader(choice(self.label_images_map[p2]), self.kind)
             return img1, img2, torch.Tensor([1])
         else:
             while True:
-                ppl = list(self.label_images_map.keys())
-                p1 = choice(ppl)
-                p2 = choice(ppl)
-                if p1 != p2 and (p1, p2) not in self.relations and (p2, p1) not in self.relations:
+                p3, p4 = choice(self.relations)
+                if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind)
-                    img2 = loader(choice(self.label_images_map[p2]), self.kind)
+                    img2 = loader(choice(self.label_images_map[p4]), self.kind)
                     return img1, img2, torch.Tensor([0])
 
     def get_length(self):
@@ -99,5 +97,5 @@ class FaceDataSet(Dataset):
 
     def __len__(self):
         if self.kind == 'train':
-            return self.length*2
+            return self.length
         return self.length
