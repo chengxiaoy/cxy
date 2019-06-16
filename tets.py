@@ -35,7 +35,7 @@ class Config():
     val_batch_size = 64
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
+def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
 
@@ -53,7 +53,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(8192, 100)
         # self.ll1 = nn.Linear(4096, 100)
         self.lll = nn.Linear(4194304, 100)
