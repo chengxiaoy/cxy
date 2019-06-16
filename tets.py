@@ -31,8 +31,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 64
+    val_batch_size = 64
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
@@ -243,10 +243,10 @@ if __name__ == '__main__':
     #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.01)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=5, factor=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
