@@ -197,7 +197,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 best_model_wts = copy.deepcopy(model.state_dict())
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
-        scheduler.step()
+        scheduler.step(epoch_acc['val'])
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
