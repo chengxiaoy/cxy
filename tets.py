@@ -64,7 +64,6 @@ class SiameseNetwork(nn.Module):
         self.ll2 = nn.Linear(200, 50)
         self.ll3 = nn.Linear(50, 1)
 
-
     def forward_once(self, x):
         x = self.pretrained_model(x)
         return x
@@ -80,9 +79,9 @@ class SiameseNetwork(nn.Module):
         :return:
         """
         output1 = self.forward_once(input1)
-        if visual_info[0]:
-            x = vutils.make_grid(output1[:, :3, :, :], normalize=True, scale_each=True)
-            writer.add_image('Image', x, visual_info[1])
+        # if visual_info[0]:
+        #     x = vutils.make_grid(output1[:, :3, :, :], normalize=True, scale_each=True)
+        #     writer.add_image('Image', x, visual_info[1])
 
         output2 = self.forward_once(input2)
         globalmax = nn.AdaptiveMaxPool2d(1)
