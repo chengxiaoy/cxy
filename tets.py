@@ -54,13 +54,16 @@ class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
-        self.ll1 = nn.Linear(8192, 100)
+        self.ll1 = nn.Linear(8192, 200)
         # self.ll1 = nn.Linear(4096, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.01)
-        self.ll2 = nn.Linear(100, 1)
+        self.dropout = nn.Dropout(0.3)
+
+        self.ll2 = nn.Linear(200, 50)
+        self.ll3 = nn.Linear(50, 1)
+
 
     def forward_once(self, x):
         x = self.pretrained_model(x)
@@ -84,15 +87,18 @@ class SiameseNetwork(nn.Module):
         output2 = self.forward_once(input2)
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
+
         output1 = torch.cat([globalavg(output1), globalmax(output1)], 1)
         output2 = torch.cat([globalavg(output2), globalmax(output2)], 1)
 
+        # (x1-x2)**2 + (x1**2-x2**2)
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
 
         # x = mul1.view(mul1.size(0),-1)
 
-        mul2 = torch.mul(output1, output2)
+        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
 
@@ -100,6 +106,9 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.ll3(x)
         x = self.sigmod(x)
         return x
 
