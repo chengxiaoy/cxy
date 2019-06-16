@@ -35,7 +35,7 @@ class Config():
     val_batch_size = 64
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
+def get_pretrained_model(include_top=False, pretrain_kind='vggface2'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
 
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001, weight_decay=0.01)
+    optimizer = Adam(model.parameters(), lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
