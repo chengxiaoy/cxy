@@ -166,8 +166,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
             running_loss = 0.0
             running_corrects = 0
+            epoch_nums = {'train': 200, 'val': 100}
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
-                if i == 200:
+                if i == epoch_nums[phase]:
                     break
                 img1 = img1.to(device)
                 img2 = img2.to(device)
@@ -193,8 +194,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
-            epoch_loss[phase] = running_loss / 200
-            epoch_acc[phase] = running_corrects / (200*16)
+            epoch_loss[phase] = running_loss / epoch_nums[phase]
+            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 16)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
