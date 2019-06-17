@@ -21,7 +21,7 @@ def transform(img):
     return img
 
 
-def loader(image_file, split, argument=True):
+def loader(image_file, split, argument=False):
     img = Image.open(image_file)
     if argument:
         img = torchvision.transforms.Resize(256)(img)
@@ -68,26 +68,27 @@ def get_data():
 
 
 class FaceDataSet(Dataset):
-    def __init__(self, relations, label_images_map, kind):
+    def __init__(self, relations, label_images_map, kind, argument=False):
         self.relations = relations
         self.label_images_map = label_images_map
         self.kind = kind
         self.length = self.get_length()
+        self.argument = argument
 
     def __getitem__(self, index):
 
         should_same = choice([0, 1])
         p1, p2 = self.relations[index % len(self.relations)]
         if should_same:
-            img1 = loader(choice(self.label_images_map[p1]), self.kind)
-            img2 = loader(choice(self.label_images_map[p2]), self.kind)
+            img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
+            img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
             return img1, img2, torch.Tensor([1])
         else:
             while True:
                 p3, p4 = choice(self.relations)
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
-                    img1 = loader(choice(self.label_images_map[p1]), self.kind)
-                    img2 = loader(choice(self.label_images_map[p4]), self.kind)
+                    img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
+                    img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
                     return img1, img2, torch.Tensor([0])
 
     def get_length(self):
