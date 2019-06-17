@@ -87,6 +87,7 @@ class SiameseNetwork(nn.Module):
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
+        output1 = torch.cat([globalavg(output1), globalmax(output1)], 1)
         output2 = torch.cat([globalavg(output2), globalmax(output2)], 1)
 
         # (x1-x2)**2
