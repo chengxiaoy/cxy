@@ -54,15 +54,15 @@ class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
-        self.ll1 = nn.Linear(8192, 200)
+        self.ll1 = nn.Linear(8192, 100)
         # self.ll1 = nn.Linear(4096, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.3)
+        self.dropout = nn.Dropout(0.01)
 
-        self.ll2 = nn.Linear(200, 50)
-        self.ll3 = nn.Linear(50, 1)
+        # self.ll2 = nn.Linear(200, 50)
+        self.ll2 = nn.Linear(100, 1)
 
     def forward_once(self, x):
         x = self.pretrained_model(x)
@@ -90,13 +90,16 @@ class SiameseNetwork(nn.Module):
         output1 = torch.cat([globalavg(output1), globalmax(output1)], 1)
         output2 = torch.cat([globalavg(output2), globalmax(output2)], 1)
 
-        # (x1-x2)**2 + (x1**2-x2**2)
+        # (x1-x2)**2
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
 
         # x = mul1.view(mul1.size(0),-1)
 
-        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        # (x1**2-x2**2)
+        # mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        # x1*x2
+        mul2 = torch.mul(output1, output2)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
@@ -105,9 +108,6 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.ll3(x)
         x = self.sigmod(x)
         return x
 
@@ -167,6 +167,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             running_loss = 0.0
             running_corrects = 0
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
+                if i == 200:
+                    break
                 img1 = img1.to(device)
                 img2 = img2.to(device)
                 target = target.to(device)
@@ -189,8 +191,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         if i[0] == j[0]:
                             running_corrects += 1
 
-            epoch_loss[phase] = running_loss / len(dataloaders[phase])
-            epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
+            # epoch_loss[phase] = running_loss / len(dataloaders[phase])
+            # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
+            epoch_loss[phase] = running_loss / 200
+            epoch_acc[phase] = running_corrects / (200*16)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
@@ -255,6 +259,6 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10, factor=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
