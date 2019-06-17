@@ -87,8 +87,8 @@ class SiameseNetwork(nn.Module):
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = torch.cat([globalavg(output1), globalmax(output1)], 1)
-        output2 = torch.cat([globalavg(output2), globalmax(output2)], 1)
+        output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
+        output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
@@ -261,6 +261,6 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10, factor=0.5)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
