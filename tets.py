@@ -87,8 +87,8 @@ class SiameseNetwork(nn.Module):
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = torch.cat([globalavg(output1), globalmax(output1)], 1)
-        output2 = torch.cat([globalavg(output2), globalmax(output2)], 1)
+        output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
+        output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
@@ -97,9 +97,9 @@ class SiameseNetwork(nn.Module):
         # x = mul1.view(mul1.size(0),-1)
 
         # (x1**2-x2**2)
-        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        # mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
         # x1*x2
-        # mul2 = torch.mul(output1, output2)
+        mul2 = torch.mul(output1, output2)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
@@ -148,7 +148,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    epoch_nums = {'train': 300, 'val': 70}
+    epoch_nums = {'train': 200, 'val': 70}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -261,6 +261,6 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10, factor=0.5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
