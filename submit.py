@@ -22,6 +22,8 @@ model = SiameseNetwork(False).to(device).eval()
 
 model.load_state_dict(torch.load('SiameseNetwork.pth'))
 
+model.eval()
+
 for batch in tqdm(chunker(submission.img_pair.values)):
     X1 = [x.split("-")[0] for x in batch]
     X1 = [loader(test_path + x, 'extract', False) for x in X1]
