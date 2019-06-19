@@ -87,8 +87,8 @@ class SiameseNetwork(nn.Module):
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = torch.cat([globalmax(output1), globalavg(output1)], 1)
-        output2 = torch.cat([globalmax(output2), globalavg(output2)], 1)
+        output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
+        output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
@@ -97,9 +97,9 @@ class SiameseNetwork(nn.Module):
         # x = mul1.view(mul1.size(0),-1)
 
         # (x1**2-x2**2)
-        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        # mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
         # x1*x2
-        # mul2 = torch.mul(output1, output2)
+        mul2 = torch.mul(output1, output2)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
