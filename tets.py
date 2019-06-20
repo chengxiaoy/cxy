@@ -251,7 +251,7 @@ if __name__ == '__main__':
                                 batch_size=Config.val_batch_size)
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    criterion = F.binary_cross_entropy
+    criterion = nn.BCELoss()
 
     # optim_params = []
     # for name, params in model.named_parameters():
