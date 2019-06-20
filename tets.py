@@ -24,8 +24,9 @@ from torchvision import models
 import joblib
 from tensorboardX import SummaryWriter
 import torchvision.utils as vutils
+from datetime import datetime
 
-writer = SummaryWriter()
+writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
