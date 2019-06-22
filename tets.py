@@ -120,7 +120,11 @@ class SiameseNetwork(nn.Module):
         mcb = CompactBilinearPooling(2048, 2048, 16000).to(device)
         x = mcb(output1, output2)
 
-        x = torch.sum(x, 1)
+        output = torch.sum(x, 1)
+
+        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-5)
+        output = F.normalize(output_sqrt, dim=1)
+        x = output
         x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
