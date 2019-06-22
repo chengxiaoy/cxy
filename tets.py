@@ -51,13 +51,11 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
-        # self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(4194304, 100)
+        self.lll = nn.Linear(16000, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
 
-        # self.ll2 = nn.Linear(200, 50)
         self.ll2 = nn.Linear(100, 1)
 
     def forward_once(self, x):
@@ -114,11 +112,16 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        output1 = output1.view(output1.size(0), -1)
-        output2 = output2.view(output2.size(0), -1)
-        mcb = CompactBilinearPooling(2048, 2048, 16000).cuda()
+        output1 = output1.permute([0, 2, 3, 1])
+        output2 = output2.permute([0, 2, 3, 1])
+
+        output1 = output1.view(output1.size(0), output1.size(1) * output1.size(2), output1.size(3))
+        output2 = output2.view(output2.size(0), output2.size(1) * output2.size(2), output2.size(3))
+        mcb = CompactBilinearPooling(2048, 2048, 16000).to(device)
         x = mcb(output1, output2)
-        x = self.ll1(x)
+
+        x = torch.sum(x, 1)
+        x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
