@@ -7,9 +7,6 @@ from PIL import Image
 import PIL
 import os
 import torch
-from glob import glob
-from collections import defaultdict
-import pandas as pd
 from fiw_dataset import *
 from torch import nn
 import torch
@@ -17,14 +14,12 @@ import torch.nn.functional as F
 import time
 import copy
 from torch.optim import Adam
-import math
-from torch.optim.lr_scheduler import StepLR
 from fiw_dataset import *
 from torchvision import models
 import joblib
 from tensorboardX import SummaryWriter
-import torchvision.utils as vutils
 from datetime import datetime
+from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
@@ -55,7 +50,7 @@ class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
-        self.ll1 = nn.Linear(8192, 100)
+        self.ll1 = nn.Linear(4096, 100)
         # self.ll1 = nn.Linear(4096, 100)
         self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
@@ -70,7 +65,8 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, visual_info)
+        # return self.forward_baseline(input1, input2, visual_info)
+        return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -88,8 +84,11 @@ class SiameseNetwork(nn.Module):
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
-        output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
+        output1 = globalavg(output1)
+        output2 = globalavg(output2)
+
+        # output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
+        # output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
@@ -105,6 +104,20 @@ class SiameseNetwork(nn.Module):
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
 
+        x = self.ll1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.ll2(x)
+        x = self.sigmod(x)
+        return x
+
+    def forward_compact_bilinear(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        output1 = output1.view(output1.size(0), -1)
+        output2 = output2.view(output2.size(0), -1)
+        mcb = CompactBilinearPooling(2048, 2048, 16000).cuda()
+        x = mcb(output1, output2)
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
