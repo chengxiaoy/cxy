@@ -51,7 +51,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(16000, 100)
+        self.lll = nn.Linear(4194304, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
@@ -64,7 +64,7 @@ class SiameseNetwork(nn.Module):
 
     def forward(self, input1, input2, visual_info):
         # return self.forward_baseline(input1, input2, visual_info)
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
