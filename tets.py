@@ -42,16 +42,16 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
         utils.load_state_dict(model, weight_file)
         return model
     elif pretrain_kind == 'imagenet':
-        return nn.Sequential(*list(models.resnet50(pretrained=True).children())[:-2])
+        return nn.Sequential(*list(models.resnet34(pretrained=True).children())[:-2])
     return None
 
 
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
         self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(4194304, 100)
+        self.lll = nn.Linear(262144, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
@@ -63,8 +63,8 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, visual_info)
-        # return self.forward_bilinear(input1, input2)
+        # return self.forward_baseline(input1, input2, visual_info)
+        return self.forward_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -117,7 +117,7 @@ class SiameseNetwork(nn.Module):
 
         output1 = output1.view(output1.size(0), output1.size(1) * output1.size(2), output1.size(3))
         output2 = output2.view(output2.size(0), output2.size(1) * output2.size(2), output2.size(3))
-        mcb = CompactBilinearPooling(2048, 2048, 16000).to(device)
+        mcb = CompactBilinearPooling(512, 512, 8000).to(device)
         x = mcb(output1, output2)
 
         output = torch.sum(x, 1)
@@ -149,7 +149,7 @@ class SiameseNetwork(nn.Module):
         output2 = output2.view(-1, c, h * w)
 
         output = torch.matmul(output1, output2.permute(0, 2, 1)).view(-1, c * c) / (h * w)
-        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-5)
+        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-10)
         output = F.normalize(output_sqrt, dim=1)
         x = output
         x = self.lll(x)
