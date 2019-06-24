@@ -49,7 +49,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
         self.lll = nn.Linear(262144, 100)
         self.relu = nn.ReLU()
