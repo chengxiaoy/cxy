@@ -10,14 +10,18 @@ import torchvision
 import torch
 
 mean_bgr = np.array([91.4953, 103.8827, 131.0912])  # from resnet50_ft.prototxt
+mean_rgb = np.array([131.0912, 103.8827, 91.4953])
 
 
 def transform(img):
-    img = img[:, :, ::-1]  # RGB -> BGR
+    # img = img[:, :, ::-1]  # RGB -> BGR
     img = img.astype(np.float32)
-    img -= mean_bgr
-    img = img.transpose(2, 0, 1)  # C x H x W
-    img = torch.from_numpy(img).float()
+    img -= mean_rgb
+    # img = img.transpose(2, 0, 1)  # C x H x W
+
+    img = torchvision.transforms.ToTensor()(img)
+    # img = torch.from_numpy(img).float()
+
     return img
 
 
