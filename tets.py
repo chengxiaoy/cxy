@@ -19,7 +19,7 @@ from torchvision import models
 import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
-from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
+# from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
