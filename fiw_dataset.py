@@ -89,8 +89,9 @@ class FaceDataSet(Dataset):
 
     def __getitem__(self, index):
 
-        should_same = self.same
-        self.same = not self.same
+        # should_same = self.same
+        # self.same = not self.same
+        should_same = index%2
         p1, p2 = self.relations[index % len(self.relations)]
         if should_same:
             img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
@@ -111,6 +112,6 @@ class FaceDataSet(Dataset):
         return length
 
     def __len__(self):
-        if self.kind == 'train':
-            return self.length
+        # if self.kind == 'train':
+        #     return self.length
         return self.length
