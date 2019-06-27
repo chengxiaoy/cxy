@@ -280,7 +280,7 @@ if __name__ == '__main__':
     #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.000001)
+    optimizer = Adam(model.parameters(), lr=0.00001)
 
     exp_decay = math.exp(-0.01)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
