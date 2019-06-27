@@ -170,7 +170,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    epoch_nums = {'train': 700, 'val': 70}
+    epoch_nums = {'train': 200, 'val': 70}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -179,13 +179,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
         epoch_acc = {}
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
-            # model.eval()
-            if phase == 'train':
-                # scheduler.step()
-                model.train()  # Set model to training mode
-                # model.apply(set_batchnorm_eval)
-            else:
-                model.eval()  # Set model to evaluate mode
+            model.train()
+            # if phase == 'train':
+            #     # scheduler.step()
+            #     model.train()  # Set model to training mode
+            #     # model.apply(set_batchnorm_eval)
+            # else:
+            #     model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
             running_corrects = 0
