@@ -19,6 +19,8 @@ from torchvision import models
 import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
+import math
+
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
@@ -231,6 +233,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 best_model_wts = copy.deepcopy(model.state_dict())
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
+        writer.add_scalar('data/loss', scheduler.get_lr())
         scheduler.step(epoch_acc['val'])
 
     time_elapsed = time.time() - since
@@ -279,8 +282,8 @@ if __name__ == '__main__':
 
     optimizer = Adam(model.parameters(), lr=0.00001)
 
-    # exp_decay = math.exp(-0.01)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1)
+    exp_decay = math.exp(-0.01)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1,verbose = True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
