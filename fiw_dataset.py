@@ -14,26 +14,33 @@ mean_rgb = np.array([131.0912, 103.8827, 91.4953])
 
 
 def transform(img):
-    # img = img[:, :, ::-1]  # RGB -> BGR
+    img = img[:, :, ::-1]  # RGB -> BGR
     img = img.astype(np.float32)
-    img -= mean_rgb
-    # img = img.transpose(2, 0, 1)  # C x H x W
+    img -= mean_bgr
+    # img -= mean_rgb
+    img = img.transpose(2, 0, 1)  # C x H x W
 
-    img = torchvision.transforms.ToTensor()(img)
+    # img = torchvision.transforms.ToTensor()(img)
     # img = torch.from_numpy(img).float()
-
+    img = torch.from_numpy(img).float()
     return img
 
 
 def loader(image_file, split, argument=False):
     img = Image.open(image_file)
+    img = torchvision.transforms.Resize(197)(img)
     if argument:
-        img = torchvision.transforms.Resize(256)(img)
+        # img = torchvision.transforms.Resize(256)(img)
         if split == 'train':
-            img = torchvision.transforms.RandomCrop(224)(img)
-            # img = torchvision.transforms.RandomHorizontalFlip(0.5)(img)
-            # img = torchvision.transforms.RandomVerticalFlip(0.5)(img)
-            img = torchvision.transforms.RandomGrayscale(p=0.2)(img)
+            trans = torchvision.transforms.Compose([
+                torchvision.transforms.RandomCrop(224),
+                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.RandomRotation(90),
+                torchvision.transforms.RandomHorizontalFlip(0.5),
+                torchvision.transforms.RandomVerticalFlip(0.5),
+            ])
+            img = trans(img)
+
         else:
             img = torchvision.transforms.CenterCrop(224)(img)
     img = np.array(img, dtype=np.uint8)

@@ -55,7 +55,6 @@ class SiameseNetwork(nn.Module):
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
-
         self.ll2 = nn.Linear(100, 1)
 
     def forward_once(self, x):
