@@ -264,12 +264,12 @@ if __name__ == '__main__':
 
     datasets = {'train': FaceDataSet(train, train_map, 'train'), 'val': FaceDataSet(val, val_map, 'val')}
 
-    train_dataloader = DataLoader(dataset=datasets['train'], shuffle=True, num_workers=4,
+    train_dataloader = DataLoader(dataset=datasets['train'], shuffle=False, num_workers=4,
                                   batch_size=Config.train_batch_size)
 
     print(len(train_dataloader))
 
-    val_dataloader = DataLoader(dataset=datasets['val'], shuffle=True, num_workers=4,
+    val_dataloader = DataLoader(dataset=datasets['val'], shuffle=False, num_workers=4,
                                 batch_size=Config.val_batch_size)
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
