@@ -29,8 +29,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 32
+    val_batch_size = 32
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
@@ -170,7 +170,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    epoch_nums = {'train': 200, 'val': 70}
+    epoch_nums = {'train': 200, 'val': 35}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -179,13 +179,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
         epoch_acc = {}
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
-            model.train()
-            # if phase == 'train':
-            #     # scheduler.step()
-            #     model.train()  # Set model to training mode
-            #     # model.apply(set_batchnorm_eval)
-            # else:
-            #     model.eval()  # Set model to evaluate mode
+            # model.train()
+            if phase == 'train':
+                # scheduler.step()
+                model.train()  # Set model to training mode
+                # model.apply(set_batchnorm_eval)
+            else:
+                model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
             running_corrects = 0
@@ -218,7 +218,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
             epoch_loss[phase] = running_loss / epoch_nums[phase]
-            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 16)
+            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 32)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
