@@ -178,7 +178,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=100):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=30):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
