@@ -61,7 +61,10 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(2048, 2048, 2048)
+        self.bilinear = nn.Bilinear(512, 512, 512)
+        self.conv = nn.Conv2d(2048, 512, 1)
+        self.globalavg = nn.AdaptiveAvgPool2d(1)
+        self.dropout2 = nn.Dropout(0.3)
 
     def forward_once(self, x):
         x = self.pretrained_model(x)
@@ -117,10 +120,16 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = globalavg(output1)
-        output2 = globalavg(output2)
+        output1 = self.conv(output1)
+        output2 = self.conv(output2)
+        output1 = nn.BatchNorm2d()(output1)
+        output2 = nn.BatchNorm2d()(output2)
+        output1 = self.relu(output1)
+        output2 = self.relu(output2)
+
+        output1 = self.globalavg(output1)
+        output2 = self.globalavg(output2)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
