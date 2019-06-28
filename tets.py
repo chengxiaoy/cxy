@@ -288,14 +288,14 @@ if __name__ == '__main__':
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
-                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train.keys()))
+                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
                                   )
 
     print(len(train_dataloader))
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
-                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val.keys())),
+                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val)),
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
