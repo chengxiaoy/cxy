@@ -128,8 +128,6 @@ class SiameseNetwork(nn.Module):
         output2 = self.bn(output2)
         output1 = self.relu(output1)
         output2 = self.relu(output2)
-        # output1 = self.dropout2(output1)
-        # output2 = self.dropout2(output2)
 
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
@@ -138,7 +136,6 @@ class SiameseNetwork(nn.Module):
         output2 = output2.view(output2.size(0), -1)
 
         output = self.bilinear(output1, output2)
-        output = self.relu(output)
 
         x = output
         x = self.lll(x)
