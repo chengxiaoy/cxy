@@ -230,7 +230,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
             epoch_loss[phase] = running_loss / epoch_nums[phase]
-            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 16)
+            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
