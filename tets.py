@@ -254,15 +254,17 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
 class CusRandomSampler(Sampler):
 
-    def __init__(self, batch_size, iter_num):
+    def __init__(self, batch_size, iter_num, relation_sizes):
         self.batch_size = batch_size
         self.iter_num = iter_num
+        self.relation_sizes = relation_sizes
 
     def __iter__(self):
+        even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
         res = []
         for i in range(self.iter_num):
+            res.extend(sample(even_list, self.batch_size // 2))
             res.extend([1] * (self.batch_size // 2))
-            res.extend([0] * (self.batch_size // 2))
 
         return iter(res)
 
@@ -285,13 +287,17 @@ if __name__ == '__main__':
     datasets = {'train': FaceDataSet(train, train_map, 'train'), 'val': FaceDataSet(val, val_map, 'val')}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
-                                  batch_size=Config.train_batch_size, shuffle=True
+                                  batch_size=Config.train_batch_size,
+                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train.keys()))
                                   )
 
     print(len(train_dataloader))
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
-                                batch_size=Config.val_batch_size, shuffle=True)
+                                batch_size=Config.val_batch_size,
+                                sampler=CusRandomSampler(Config.train_batch_size, 200, len(train.keys())),
+                                # shuffle=True
+                                )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
     criterion = nn.BCELoss()
@@ -303,8 +309,8 @@ if __name__ == '__main__':
 
     optimizer = Adam(model.parameters(), lr=0.00001)
 
-    exp_decay = math.exp(-0.01)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    # exp_decay = math.exp(-0.01)
+    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)

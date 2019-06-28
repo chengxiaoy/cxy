@@ -91,8 +91,9 @@ class FaceDataSet(Dataset):
 
         # should_same = self.same
         # self.same = not self.same
-        should_same = index % 2
-        p1, p2 = choice(self.relations)
+
+        should_same = index % 2 == 0
+        p1, p2 = self.relations[index / 2]
         if should_same:
             img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
             img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
