@@ -303,8 +303,8 @@ if __name__ == '__main__':
 
     optimizer = Adam(model.parameters(), lr=0.00001)
 
-    # exp_decay = math.exp(-0.01)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    exp_decay = math.exp(-0.01)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
