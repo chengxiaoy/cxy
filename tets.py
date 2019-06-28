@@ -15,7 +15,7 @@ import time
 import copy
 from torch.optim import Adam
 from fiw_dataset import *
-from torch.utils.data import RandomSampler
+from torch.utils.data import RandomSampler, Sampler
 
 from torchvision import models
 import joblib
@@ -252,6 +252,24 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     return model
 
 
+class CusRandomSampler(Sampler):
+
+    def __init__(self, batch_size, iter_num):
+        self.batch_size = batch_size
+        self.iter_num = iter_num
+
+    def __iter__(self):
+        res = []
+        for i in range(self.iter_num):
+            res.extend([1] * (self.batch_size // 2))
+            res.extend([0] * (self.batch_size // 2))
+
+        return iter(res)
+
+    def __len__(self):
+        return self.batch_size * self.iter_num
+
+
 if __name__ == '__main__':
     img1 = loader('face.jpg', 'extract').unsqueeze(0)
     img2 = loader('face.jpg', 'extract').unsqueeze(0)
@@ -268,12 +286,12 @@ if __name__ == '__main__':
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
-                                  sampler=RandomSampler(datasets['train'], False))
+                                  sampler=CusRandomSampler(Config.train_batch_size, 200))
 
     print(len(train_dataloader))
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
-                                batch_size=Config.val_batch_size, sampler=RandomSampler(datasets['train'], False))
+                                batch_size=Config.val_batch_size, sampler=CusRandomSampler(Config.val_batch_size, 100))
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
     criterion = nn.BCELoss()
