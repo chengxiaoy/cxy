@@ -55,19 +55,21 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(262144, 100)
+        self.lll = nn.Linear(2048, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
+
+        self.bilinear = nn.Bilinear(2048, 2048, 2048)
 
     def forward_once(self, x):
         x = self.pretrained_model(x)
         return x
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, visual_info)
-        # return self.forward_bilinear(input1, input2)
+        # return self.forward_baseline(input1, input2, visual_info)
+        return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -115,18 +117,16 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        output1 = output1.permute([0, 2, 3, 1])
-        output2 = output2.permute([0, 2, 3, 1])
+        globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = output1.view(output1.size(0), output1.size(1) * output1.size(2), output1.size(3))
-        output2 = output2.view(output2.size(0), output2.size(1) * output2.size(2), output2.size(3))
-        mcb = CompactBilinearPooling(512, 512, 8000).to(device)
-        x = mcb(output1, output2)
+        output1 = globalavg(output1)
+        output2 = globalavg(output2)
 
-        output = torch.sum(x, 1)
+        output1 = output1.view(output1.size(0), -1)
+        output2 = output2.view(output2.size(0), -1)
 
-        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-5)
-        output = F.normalize(output_sqrt, dim=1)
+        output = self.bilinear(output1, output2)
+
         x = output
         x = self.lll(x)
         x = self.relu(x)
