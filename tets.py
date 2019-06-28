@@ -15,6 +15,8 @@ import time
 import copy
 from torch.optim import Adam
 from fiw_dataset import *
+from torch.utils.data import RandomSampler
+
 from torchvision import models
 import joblib
 from tensorboardX import SummaryWriter
@@ -265,12 +267,13 @@ if __name__ == '__main__':
     datasets = {'train': FaceDataSet(train, train_map, 'train'), 'val': FaceDataSet(val, val_map, 'val')}
 
     train_dataloader = DataLoader(dataset=datasets['train'], shuffle=True, num_workers=4,
-                                  batch_size=Config.train_batch_size)
+                                  batch_size=Config.train_batch_size,
+                                  sampler=RandomSampler(datasets['train'], True, 320))
 
     print(len(train_dataloader))
 
     val_dataloader = DataLoader(dataset=datasets['val'], shuffle=True, num_workers=4,
-                                batch_size=Config.val_batch_size)
+                                batch_size=Config.val_batch_size, sampler=RandomSampler(datasets['train'], True, 160))
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
     criterion = nn.BCELoss()
@@ -284,6 +287,6 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1,verbose = True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
