@@ -61,7 +61,7 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 100)
+        self.bilinear = nn.Bilinear(512, 512, 512)
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.dropout2 = nn.Dropout(0.3)
@@ -141,9 +141,9 @@ class SiameseNetwork(nn.Module):
         output = self.relu(output)
 
         x = output
-        # x = self.lll(x)
-        # x = self.relu(x)
-        # x = self.dropout(x)
+        x = self.lll(x)
+        x = self.relu(x)
+        x = self.dropout(x)
         x = self.ll2(x)
         x = self.sigmod(x)
         return x
@@ -324,7 +324,7 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60], 0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [15, 25], 0.1)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
