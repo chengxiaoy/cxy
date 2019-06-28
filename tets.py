@@ -172,7 +172,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    # epoch_nums = {'train': 200, 'val': 100}
+    epoch_nums = {'train': 200, 'val': 100}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -193,8 +193,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             running_corrects = 0
 
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
-                # if i == epoch_nums[phase]:
-                #     break
+                if i == epoch_nums[phase]:
+                    break
                 img1 = img1.to(device)
                 img2 = img2.to(device)
                 target = target.to(device)
@@ -220,7 +220,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
             epoch_loss[phase] = running_loss / epoch_nums[phase]
-            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 32)
+            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * 16)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
