@@ -99,7 +99,7 @@ class FaceDataSet(Dataset):
             return img1, img2, torch.Tensor([1])
         else:
             while True:
-                p3, p4 = choice(self.relations)
+                p1, p4 = sample(self.label_images_map.keys(), 2)
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
                     img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
