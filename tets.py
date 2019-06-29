@@ -60,14 +60,14 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
-        self.lll = nn.Linear(1024, 100)
+        self.bilinear = nn.Bilinear(512, 512, 512)
+        self.lll = nn.Linear(512, 100)
 
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
-        self.bn2 = nn.BatchNorm1d(1024)
+        self.bn2 = nn.BatchNorm1d(512)
 
     def forward_once(self, x):
         x = self.pretrained_model(x)
