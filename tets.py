@@ -55,13 +55,14 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
-        self.lll = nn.Linear(512, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 512)
+        self.bilinear = nn.Bilinear(512, 512, 1024)
+        self.lll = nn.Linear(1024, 100)
+
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.dropout2 = nn.Dropout(0.3)
@@ -176,7 +177,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=30):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=100):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -321,7 +322,7 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [15, 25], 0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60], 0.1)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
