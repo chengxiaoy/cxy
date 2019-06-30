@@ -74,8 +74,8 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, visual_info)
-        # return self.forward_compact_bilinear(input1, input2)
+        # return self.forward_baseline(input1, input2, visual_info)
+        return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -319,19 +319,19 @@ if __name__ == '__main__':
     frozen_layers = ['pretrained_model.conv1.weight', 'pretrained_model.bn1.weight', 'pretrained_model.bn1.bias']
     prefix_layers = ['pretrained_model.layer1','pretrained_model.layer2']
 
-    for name, params in model.named_parameters():
-        frozen = False
-        for frozen_layer in frozen_layers:
-            if name.startswith(frozen_layer):
-                frozen = True
-        for prefix_layer in prefix_layers:
-            if name.startswith(prefix_layer):
-                frozen = True
-        if not frozen:
-            optim_params.append(params)
+    # for name, params in model.named_parameters():
+    #     frozen = False
+    #     for frozen_layer in frozen_layers:
+    #         if name.startswith(frozen_layer):
+    #             frozen = True
+    #     for prefix_layer in prefix_layers:
+    #         if name.startswith(prefix_layer):
+    #             frozen = True
+    #     if not frozen:
+    #         optim_params.append(params)
 
-    # optimizer = Adam(model.parameters(), lr=0.00001)
-    optimizer = Adam(optim_params, lr=0.00001)
+    optimizer = Adam(model.parameters(), lr=0.00001)
+    # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
