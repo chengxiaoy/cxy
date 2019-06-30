@@ -317,7 +317,7 @@ if __name__ == '__main__':
     optim_params = []
 
     frozen_layers = ['pretrained_model.conv1.weight', 'pretrained_model.bn1.weight', 'pretrained_model.bn1.bias']
-    prefix_layers = ['pretrained_model.layer1','pretrained_model.layer2']
+    prefix_layers = ['pretrained_model.layer1', 'pretrained_model.layer2']
 
     # for name, params in model.named_parameters():
     #     frozen = False
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
