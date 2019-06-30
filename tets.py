@@ -27,7 +27,7 @@ import math
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -137,9 +137,9 @@ class SiameseNetwork(nn.Module):
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
 
-        output = self.bilinear(output1, output2)
+        x = self.bilinear(output1, output2)
 
-        x = self.bn2(output)
+        # x = self.bn2(x)
         x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
