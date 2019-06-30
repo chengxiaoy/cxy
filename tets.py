@@ -317,15 +317,16 @@ if __name__ == '__main__':
     optim_params = []
 
     frozen_layers = ['pretrained_model.conv1.weight', 'pretrained_model.bn1.weight', 'pretrained_model.bn1.bias']
-    prefix_layer = 'pretrained_model.layer1'
+    prefix_layers = ['pretrained_model.layer1','pretrained_model.layer2']
 
     for name, params in model.named_parameters():
         frozen = False
         for frozen_layer in frozen_layers:
             if name.startswith(frozen_layer):
                 frozen = True
-        if name.startswith(prefix_layer):
-            frozen = True
+        for prefix_layer in prefix_layers:
+            if name.startswith(prefix_layer):
+                frozen = True
         if not frozen:
             optim_params.append(params)
 
