@@ -314,16 +314,27 @@ if __name__ == '__main__':
 
     criterion = nn.BCELoss()
 
-    # optim_params = []
-    # for name, params in model.named_parameters():
-    #     if name.startswith('pretrained_model.7') or name.startswith('ll'):
-    #         optim_params.append(params)
+    optim_params = []
 
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    frozen_layers = ['pretrained_model.conv1.weight', 'pretrained_model.bn1.weight', 'pretrained_model.bn1.bias']
+    prefix_layer = 'pretrained_model.layer1'
+
+    for name, params in model.named_parameters():
+        frozen = False
+        for frozen_layer in frozen_layers:
+            if name.startswith(frozen_layer):
+                frozen = True
+        if name.startswith(prefix_layer):
+            frozen = True
+        if not frozen:
+            optim_params.append(params)
+
+    # optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60], 0.1)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60], 0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
