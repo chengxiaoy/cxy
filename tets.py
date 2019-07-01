@@ -142,7 +142,7 @@ class SiameseNetwork(nn.Module):
         # x = self.bn2(x)
         x = self.lll(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        x = self.dropout2(x)
         x = self.ll2(x)
         x = self.sigmod(x)
         return x
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00003, amsgrad=True)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
