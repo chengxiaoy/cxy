@@ -62,6 +62,7 @@ class SiameseNetwork(nn.Module):
 
         self.bilinear = nn.Bilinear(512, 512, 512)
         self.lll = nn.Linear(512, 100)
+        self.ll = nn.Linear(2048, 512)
 
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
@@ -75,7 +76,8 @@ class SiameseNetwork(nn.Module):
 
     def forward(self, input1, input2, visual_info):
         # return self.forward_baseline(input1, input2, visual_info)
-        return self.forward_compact_bilinear(input1, input2)
+        # return self.forward_compact_bilinear(input1, input2)
+        return self.forward_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -148,25 +150,20 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward_bilinear(self, input1, input2):
-        """
-        the output size of bilinear is related to channel_size**2
-        the linear params after bilinear op maybe very huge
-        :param input1:
-        :param input2:
-        :return:
-        """
         output1 = self.forward_once(input1)
-        h, w = output1.shape[2], output1.shape[3]
-        c = output1.shape[1]
-        output1 = output1.view(-1, c, h * w)
-
         output2 = self.forward_once(input2)
-        output2 = output2.view(-1, c, h * w)
 
-        output = torch.matmul(output1, output2.permute(0, 2, 1)).view(-1, c * c) / (h * w)
-        output_sqrt = torch.sign(output) * (torch.sqrt(torch.abs(output)) + 1e-10)
-        output = F.normalize(output_sqrt, dim=1)
-        x = output
+        output1 = self.globalavg(output1)
+        output2 = self.globalavg(output2)
+
+        output1 = output1.view(output1.size(0), -1)
+        output2 = output2.view(output2.size(0), -1)
+        output1 = self.ll(output1)
+        output2 = self.ll(output2)
+
+        x = self.bilinear(output1, output2)
+
+        # x = self.bn2(x)
         x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
