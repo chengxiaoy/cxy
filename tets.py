@@ -60,7 +60,7 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 512)
+        self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(512, 100)
         self.ll = nn.Linear(2048, 512)
 
