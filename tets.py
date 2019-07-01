@@ -143,7 +143,7 @@ class SiameseNetwork(nn.Module):
         x = self.bilinear(output1, output2)
         x = self.relu(x)
 
-        # x = self.bn2(x)
+        x = self.bn2(x)
         x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
