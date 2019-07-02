@@ -40,11 +40,11 @@ def loader(image_file, split, argument=False):
             #     torchvision.transforms.RandomVerticalFlip(0.5),
             # ])
             # img = trans(img)
-            img = torchvision.transforms.RandomResizedCrop(197)(img)
-
+            # img = torchvision.transforms.RandomResizedCrop(197)(img)
+            img = torchvision.transforms.CenterCrop(197)(img)
 
         else:
-            img = torchvision.transforms.Resize(197)(img)
+            img = torchvision.transforms.CenterCrop(197)(img)
 
     img = np.array(img, dtype=np.uint8)
     return transform(img)

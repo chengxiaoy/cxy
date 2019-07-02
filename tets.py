@@ -178,7 +178,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=200):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=60):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -335,7 +335,7 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60,100], 0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
