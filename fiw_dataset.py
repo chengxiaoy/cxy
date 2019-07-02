@@ -22,7 +22,7 @@ def transform(img):
 
     img = torchvision.transforms.ToTensor()(img)
     # img = torch.from_numpy(img).float()
-    img = torch.from_numpy(img).half()
+    img = img.half()
     return img
 
 
