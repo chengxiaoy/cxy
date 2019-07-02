@@ -60,11 +60,11 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
+        self.bilinear = nn.Bilinear(1024, 1024, 1024)
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(2048, 512, 1)
+        self.conv = nn.Conv2d(2048, 1024, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
