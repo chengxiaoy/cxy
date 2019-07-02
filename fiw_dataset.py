@@ -20,7 +20,7 @@ def transform(img):
     # img -= mean_rgb
     img = img.transpose(2, 0, 1)  # C x H x W
 
-    # img = torchvision.transforms.ToTensor()(img)
+    img = torchvision.transforms.ToTensor()(img)
     # img = torch.from_numpy(img).float()
     img = torch.from_numpy(img).half()
     return img
