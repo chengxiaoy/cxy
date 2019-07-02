@@ -21,8 +21,9 @@ def transform(img):
     img = img.transpose(2, 0, 1)  # C x H x W
 
     img = torchvision.transforms.ToTensor()(img)
-    # img = torch.from_numpy(img).float()
     img = img.half()
+
+    # img = torch.from_numpy(img).float()
     return img
 
 
