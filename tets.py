@@ -53,7 +53,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2').half()
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
@@ -287,8 +287,7 @@ class CusRandomSampler(Sampler):
 if __name__ == '__main__':
     # img1 = loader('face.jpg', 'extract').unsqueeze(0)
     # img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    model = SiameseNetwork(False).to(device).half()
-    #
+    model = SiameseNetwork(False).to(device)
     # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
     #
     # res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()

@@ -20,10 +20,10 @@ def transform(img):
     # img -= mean_rgb
     img = img.transpose(2, 0, 1)  # C x H x W
 
-    img = torchvision.transforms.ToTensor()(img)
-    img = img.half()
-
-    # img = torch.from_numpy(img).float()
+    # img = torchvision.transforms.ToTensor()(img)
+    # img = img.half()
+    #
+    img = torch.from_numpy(img).float()
     return img
 
 
@@ -98,14 +98,14 @@ class FaceDataSet(Dataset):
             p1, p2 = self.relations[int(index / 2)]
             img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
             img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
-            return img1, img2, torch.Tensor([1]).half()
+            return img1, img2, torch.Tensor([1])
         else:
             while True:
                 p1, p4 = sample(self.label_images_map.keys(), 2)
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
                     img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
-                    return img1, img2, torch.Tensor([0]).half()
+                    return img1, img2, torch.Tensor([0])
 
     def get_length(self):
         length = 0
