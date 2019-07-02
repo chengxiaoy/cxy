@@ -97,7 +97,7 @@ class FaceDataSet(Dataset):
             p1, p2 = self.relations[int(index / 2)]
             img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
             img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
-            return img1, img2, torch.Tensor([1])
+            return img1, img2, torch.Tensor([1]).half()
         else:
             while True:
                 p1, p4 = sample(self.label_images_map.keys(), 2)
