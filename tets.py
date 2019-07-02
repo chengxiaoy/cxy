@@ -329,8 +329,8 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    # optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
-    optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
+    # optimizer = Adam(model.parameters(), lr=0.00001)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
