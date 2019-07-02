@@ -147,7 +147,7 @@ class SiameseNetwork(nn.Module):
         # x = self.bn2(x)
         x = self.lll(x)
         x = self.relu(x)
-        x = self.dropout2(x)
+        x = self.dropout(x)
         x = self.ll2(x)
         x = self.sigmod(x)
         return x
