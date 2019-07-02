@@ -29,21 +29,23 @@ def transform(img):
 
 def loader(image_file, split, argument=False):
     img = Image.open(image_file)
-    img = torchvision.transforms.Resize(197)(img)
     if argument:
         # img = torchvision.transforms.Resize(256)(img)
         if split == 'train':
-            trans = torchvision.transforms.Compose([
-                torchvision.transforms.RandomCrop(224),
-                torchvision.transforms.RandomGrayscale(p=0.2),
-                torchvision.transforms.RandomRotation(90),
-                torchvision.transforms.RandomHorizontalFlip(0.5),
-                torchvision.transforms.RandomVerticalFlip(0.5),
-            ])
-            img = trans(img)
+            # trans = torchvision.transforms.Compose([
+            #     torchvision.transforms.RandomCrop(197),
+            #     torchvision.transforms.RandomGrayscale(p=0.2),
+            #     torchvision.transforms.RandomRotation(90),
+            #     torchvision.transforms.RandomHorizontalFlip(0.5),
+            #     torchvision.transforms.RandomVerticalFlip(0.5),
+            # ])
+            # img = trans(img)
+            img = torchvision.transforms.RandomResizedCrop(197)(img)
+
 
         else:
-            img = torchvision.transforms.CenterCrop(224)(img)
+            img = torchvision.transforms.Resize(197)(img)
+
     img = np.array(img, dtype=np.uint8)
     return transform(img)
 
