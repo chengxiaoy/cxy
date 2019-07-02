@@ -104,7 +104,7 @@ class FaceDataSet(Dataset):
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
                     img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
-                    return img1, img2, torch.Tensor([0])
+                    return img1, img2, torch.Tensor([0]).half()
 
     def get_length(self):
         length = 0
