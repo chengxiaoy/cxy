@@ -31,8 +31,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 32
+    val_batch_size = 32
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
@@ -178,7 +178,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=150):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=100):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -295,7 +295,7 @@ if __name__ == '__main__':
 
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', True), 'val': FaceDataSet(val, val_map, 'val', True)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
