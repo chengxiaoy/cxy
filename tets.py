@@ -145,14 +145,14 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        output1_max = self.globalmax(output1)
-        output2_max = self.globalmax(output2)
+        # output1_max = self.globalmax(output1)
+        # output2_max = self.globalmax(output2)
 
-        output1_avg = self.globalavg(output1)
-        output2_avg = self.globalavg(output2)
+        output1 = self.globalavg(output1)
+        output2 = self.globalavg(output2)
 
-        output1 = torch.cat([output1_max, output1_avg], 1)
-        output2 = torch.cat([output2_max, output2_avg], 1)
+        # output1 = torch.cat([output1_max, output1_avg], 1)
+        # output2 = torch.cat([output2_max, output2_avg], 1)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
