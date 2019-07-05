@@ -61,7 +61,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
-        self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
+        # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
@@ -72,8 +72,9 @@ class SiameseNetwork(nn.Module):
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(4096, 512, 1)
+        self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
+        self.globalmax = nn.AdaptiveMaxPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
@@ -81,8 +82,8 @@ class SiameseNetwork(nn.Module):
 
     def forward_once(self, input):
         x = self.pretrained_model(input)
-        x_1 = self.pretrained_model2(input)
-        x = torch.cat([x, x_1], 1)
+        # x_1 = self.pretrained_model2(input)
+        # x = torch.cat([x, x_1], 1)
         return x
 
     def forward(self, input1, input2, visual_info):
@@ -144,8 +145,12 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        output1 = self.globalavg(output1)
-        output2 = self.globalavg(output2)
+        output1 = self.globalmax(output1)
+        output2 = self.globalmax(output2)
+
+
+        # output1 = self.globalavg(output1)
+        # output2 = self.globalavg(output2)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
