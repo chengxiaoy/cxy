@@ -68,7 +68,7 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(1024, 1024, 1024)
+        self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
@@ -355,7 +355,7 @@ if __name__ == '__main__':
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=50)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
