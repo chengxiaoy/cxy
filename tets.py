@@ -68,7 +68,7 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
+        self.bilinear = nn.Bilinear(1024, 1024, 1024)
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
@@ -145,12 +145,14 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        output1 = self.globalmax(output1)
-        output2 = self.globalmax(output2)
+        output1_max = self.globalmax(output1)
+        output2_max = self.globalmax(output2)
 
+        output1_avg = self.globalavg(output1)
+        output2_avg = self.globalavg(output2)
 
-        # output1 = self.globalavg(output1)
-        # output2 = self.globalavg(output2)
+        output1 = torch.cat([output1_max, output1_avg], 1)
+        output2 = torch.cat([output2_max, output2_avg], 1)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
@@ -353,6 +355,7 @@ if __name__ == '__main__':
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=50)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
