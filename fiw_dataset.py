@@ -45,8 +45,8 @@ def loader(image_file, split, argument=False):
         else:
             img = torchvision.transforms.Resize(197)(img)
     else:
-        pass
-        # img = torchvision.transforms.Resize(197)(img)
+        # pass
+        img = torchvision.transforms.Resize(197)(img)
 
     img = np.array(img, dtype=np.uint8)
     return transform(img)

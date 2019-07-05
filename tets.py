@@ -1,4 +1,5 @@
 import resnet as ResNet
+import senet as SeNet
 import utils
 from torchvision.transforms import transforms
 import torchvision
@@ -39,11 +40,14 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
 
-        model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
+        # model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
 
-        weight_file = 'resnet50_ft_weight.pkl'
+        model = SeNet.senet50(num_classes=N_IDENTITY, include_top=include_top).eval()
 
-        utils.load_state_dict(model, weight_file)
+        resnet50_weight_file = 'resnet50_ft_weight.pkl'
+        senet_weight_file = 'senet50_ft_weight.pkl'
+
+        utils.load_state_dict(model, senet_weight_file)
         return model
     elif pretrain_kind == 'imagenet':
         return nn.Sequential(*list(models.resnet50(pretrained=True).children())[:-2])
