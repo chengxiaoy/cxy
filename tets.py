@@ -295,11 +295,11 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    img1 = loader('face.jpg', 'extract').unsqueeze(0)
+    # img1 = loader('face.jpg', 'extract').unsqueeze(0)
 
     # img2 = loader('face.jpg', 'extract').unsqueeze(0)
     model = SiameseNetwork(False).to(device)
-    model.forward_once(img1)
+    # model.forward_once(img1)
     # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
     #
     # res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()
