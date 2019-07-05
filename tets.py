@@ -36,19 +36,21 @@ class Config():
     val_batch_size = 16
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='imagenet'):
+def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
-
-        # model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
-
-        model = SeNet.senet50(num_classes=N_IDENTITY, include_top=include_top).eval()
-
         resnet50_weight_file = 'resnet50_ft_weight.pkl'
         senet_weight_file = 'senet50_ft_weight.pkl'
 
-        utils.load_state_dict(model, senet_weight_file)
-        return model
+        if model_name == 'resnet50':
+            model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
+            utils.load_state_dict(model, resnet50_weight_file)
+            return model
+
+        elif model_name == 'senet50':
+            model = SeNet.senet50(num_classes=N_IDENTITY, include_top=include_top).eval()
+            utils.load_state_dict(model, senet_weight_file)
+            return model
     elif pretrain_kind == 'imagenet':
         return nn.Sequential(*list(models.resnet50(pretrained=True).children())[:-2])
     return None
@@ -58,6 +60,8 @@ class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+
+        self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
@@ -68,15 +72,17 @@ class SiameseNetwork(nn.Module):
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(2048, 512, 1)
+        self.conv = nn.Conv2d(4096, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
         self.bn2 = nn.BatchNorm1d(512)
 
-    def forward_once(self, x):
-        x = self.pretrained_model(x)
+    def forward_once(self, input):
+        x = self.pretrained_model(input)
+        x_1 = self.pretrained_model2(input)
+        x = torch.cat([x, x_1], 1)
         return x
 
     def forward(self, input1, input2, visual_info):
@@ -289,9 +295,11 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    # img1 = loader('face.jpg', 'extract').unsqueeze(0)
+    img1 = loader('face.jpg', 'extract').unsqueeze(0)
+
     # img2 = loader('face.jpg', 'extract').unsqueeze(0)
     model = SiameseNetwork(False).to(device)
+    model.forward_once(img1)
     # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
     #
     # res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()
