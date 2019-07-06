@@ -67,17 +67,11 @@ class RandomErasing(object):
                 y1 = random.randint(0, width - w)
 
                 img = np.array(img)
-                if img.size()[0] == 3:
-                    # img[0, x1:x1+h, y1:y1+w] = random.uniform(0, 1)
-                    # img[1, x1:x1+h, y1:y1+w] = random.uniform(0, 1)
-                    # img[2, x1:x1+h, y1:y1+w] = random.uniform(0, 1)
-                    img[0, y1:y1 + w, x1:x1 + h] = self.mean[0]
-                    img[1, y1:y1 + w, x1:x1 + h] = self.mean[1]
-                    img[2, y1:y1 + w, x1:x1 + h] = self.mean[2]
-                    # img[:, x1:x1+h, y1:y1+w] = torch.from_numpy(np.random.rand(3, h, w))
-                else:
-                    img[0, y1:y1 + w, x1:x1 + h] = self.mean[1]
-                    # img[0, x1:x1+h, y1:y1+w] = torch.from_numpy(np.random.rand(1, h, w))
+
+                img[0, y1:y1 + w, x1:x1 + h] = self.mean[0]
+                img[1, y1:y1 + w, x1:x1 + h] = self.mean[1]
+                img[2, y1:y1 + w, x1:x1 + h] = self.mean[2]
+
                 img = Image.fromarray(img.astype('uint8')).convert('RGB')
                 return img
 
