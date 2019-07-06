@@ -262,6 +262,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             if phase == 'val' and epoch_acc[phase] > max_acc:
                 max_acc = epoch_acc[phase]
                 best_model_wts = copy.deepcopy(model.state_dict())
+                torch.save(model.state_dict(), str(model) + ".pth")
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
         # writer.add_scalar('data/loss', scheduler.get_lr())
