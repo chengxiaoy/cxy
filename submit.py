@@ -26,10 +26,10 @@ model.eval()
 
 for batch in tqdm(chunker(submission.img_pair.values)):
     X1 = [x.split("-")[0] for x in batch]
-    X1 = [loader(test_path + x, 'extract', True) for x in X1]
+    X1 = [loader(test_path + x, 'extract', False) for x in X1]
 
     X2 = [x.split("-")[1] for x in batch]
-    X2 = [loader(test_path + x, 'extract', True) for x in X2]
+    X2 = [loader(test_path + x, 'extract', False) for x in X2]
 
     res = model(default_collate(X1).to(device), default_collate(X2).to(device), [False, 0])
     res = res.data.cpu().numpy()
