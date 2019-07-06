@@ -8,6 +8,7 @@ import PIL
 from PIL import Image
 import torchvision
 import torch
+from tricks import tricks
 
 mean_bgr = np.array([91.4953, 103.8827, 131.0912])  # from resnet50_ft.prototxt
 mean_rgb = np.array([131.0912, 103.8827, 91.4953])
@@ -29,16 +30,18 @@ def transform(img):
 
 def loader(image_file, split, argument=False):
     img = Image.open(image_file)
+    img.crop()
     if argument:
         # img = torchvision.transforms.Resize(256)(img)
         if split == 'train':
             # img = torchvision.transforms.Resize(197)(img),
             trans = torchvision.transforms.Compose([
-                torchvision.transforms.RandomCrop(197),
-                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.Resize(197),
+                # torchvision.transforms.RandomGrayscale(p=0.2),
                 # torchvision.transforms.RandomRotation(90),
-                torchvision.transforms.RandomHorizontalFlip(0.5),
-                torchvision.transforms.RandomVerticalFlip(0.5),
+                # torchvision.transforms.RandomHorizontalFlip(0.5),
+                # torchvision.transforms.RandomVerticalFlip(0.5),
+                tricks.RandomErasing(mean=mean_rgb)
             ])
             img = trans(img)
 
