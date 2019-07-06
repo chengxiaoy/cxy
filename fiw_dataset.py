@@ -30,7 +30,6 @@ def transform(img):
 
 def loader(image_file, split, argument=False):
     img = Image.open(image_file)
-    img.crop()
     if argument:
         # img = torchvision.transforms.Resize(256)(img)
         if split == 'train':

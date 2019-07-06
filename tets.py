@@ -314,7 +314,7 @@ if __name__ == '__main__':
 
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', True), 'val': FaceDataSet(val, val_map, 'val', True)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
