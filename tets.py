@@ -306,7 +306,6 @@ if __name__ == '__main__':
     # img1 = loader('face.jpg', 'extract').unsqueeze(0)
 
     # img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    model = SiameseNetwork(False).to(device)
     # model.forward_once(img1)
     # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
     #
@@ -330,6 +329,7 @@ if __name__ == '__main__':
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
+    model = SiameseNetwork(False).to(device)
 
     criterion = nn.BCELoss()
 

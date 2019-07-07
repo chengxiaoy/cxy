@@ -63,10 +63,10 @@ def get_data():
     all_images = glob(train_folders_path + "*/*/*.jpg")
     all_images = [x.replace('\\', '/') for x in all_images]
 
-    train_images, val_images = train_test_split(all_images,test_size=0.1)
+    # train_images, val_images = train_test_split(all_images, test_size=0.1)
 
-    # train_images = [x for x in all_images if val_famillies not in x]
-    # val_images = [x for x in all_images if val_famillies in x]
+    train_images = [x for x in all_images if val_famillies not in x]
+    val_images = [x for x in all_images if val_famillies in x]
 
     train_person_to_images_map = defaultdict(list)
 
@@ -86,6 +86,7 @@ def get_data():
 
     train = [x for x in relationships if val_famillies not in x[0]]
     val = [x for x in relationships if val_famillies in x[0]]
+
     return train, train_person_to_images_map, val, val_person_to_images_map
 
 
