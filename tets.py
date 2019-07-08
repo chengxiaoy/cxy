@@ -59,7 +59,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
@@ -208,6 +208,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
         epoch_loss = {}
         epoch_acc = {}
+        epoch_true_negative = {}
+        epoch_false_positive = {}
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
             # model.train()
@@ -252,18 +254,16 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         else:
                             false_positive += 1
 
-
-            print(
-                "true_negative and false_positive percent is {}".format(
-                    str(true_negative / epoch_nums[phase] * Config.train_batch_size),
-                    str(false_positive / epoch_nums[phase] * Config.train_batch_size)))
-
+            epoch_true_negative[phase] = true_negative / (epoch_nums[phase] * Config.train_batch_size)
+            epoch_false_positive[phase] = false_positive / (epoch_nums[phase] * Config.train_batch_size)
             epoch_loss[phase] = running_loss / epoch_nums[phase]
             epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]))
+            print('{} true_negative:{} false_positive:{}'.format(phase, epoch_true_negative[phase],
+                                                                 epoch_false_positive[phase]))
 
             # deep copy the model
             if phase == 'val' and epoch_loss[phase] < min_loss:
@@ -273,6 +273,11 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 max_acc = epoch_acc[phase]
                 best_model_wts = copy.deepcopy(model.state_dict())
                 torch.save(model.state_dict(), str(model) + ".pth")
+        writer.add_scalars('data/true_negative',
+                           {'train': epoch_true_negative['train'], 'val': epoch_true_negative['val']}, epoch)
+        writer.add_scalars('data/false_positive',
+                           {'train': epoch_false_positive['train'], 'val': epoch_false_positive['val']}, epoch)
+
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
         # writer.add_scalar('data/loss', scheduler.get_lr())
@@ -295,6 +300,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 class CusRandomSampler(Sampler):
 
     def __init__(self, batch_size, iter_num, relation_sizes):
+        super(CusRandomSampler, self).__init__(data_source=None)
         self.batch_size = batch_size
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
@@ -341,7 +347,9 @@ if __name__ == '__main__':
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
     model = SiameseNetwork(False).to(device)
 
-    criterion = nn.BCELoss()
+    weights = [1.0] * (Config.train_batch_size // 2)
+    weights.extend([0.5] * (Config.train_batch_size // 2))
+    criterion = nn.BCELoss(weights)
 
     optim_params = []
 
