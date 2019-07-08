@@ -32,8 +32,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 32
-    val_batch_size = 32
+    train_batch_size = 16
+    val_batch_size = 16
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -220,6 +220,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
             running_loss = 0.0
             running_corrects = 0
+            true_negative = 0
+            false_positive = 0
 
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 if i == epoch_nums[phase]:
@@ -245,9 +247,17 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     for i, j in zip(label, target.data.cpu().numpy()):
                         if i[0] == j[0]:
                             running_corrects += 1
+                        elif i[0]:
+                            true_negative += 1
+                        else:
+                            false_positive += 1
 
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
+            print("corrects sum is {}".format(str(running_corrects)))
+            print("true_negative is {}".format(str(true_negative)))
+            print("false_positive is {}".format(str(false_positive)))
+
             epoch_loss[phase] = running_loss / epoch_nums[phase]
             epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
 
