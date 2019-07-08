@@ -252,13 +252,11 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         else:
                             false_positive += 1
 
-            # epoch_loss[phase] = running_loss / len(dataloaders[phase])
-            # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
-            print("corrects sum is {}".format(str(running_corrects)))
+
             print(
-                "true_negative percent is {}".format(str(true_negative / epoch_nums[phase] * Config.train_batch_size)))
-            print("false_positive percent is {}".format(
-                str(false_positive / epoch_nums[phase] * Config.train_batch_size)))
+                "true_negative and false_positive percent is {}".format(
+                    str(true_negative / epoch_nums[phase] * Config.train_batch_size),
+                    str(false_positive / epoch_nums[phase] * Config.train_batch_size)))
 
             epoch_loss[phase] = running_loss / epoch_nums[phase]
             epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
