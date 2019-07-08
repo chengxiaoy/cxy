@@ -255,8 +255,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             # epoch_loss[phase] = running_loss / len(dataloaders[phase])
             # epoch_acc[phase] = running_corrects / len(dataloaders[phase].dataset)
             print("corrects sum is {}".format(str(running_corrects)))
-            print("true_negative is {}".format(str(true_negative)))
-            print("false_positive is {}".format(str(false_positive)))
+            print(
+                "true_negative percent is {}".format(str(true_negative / epoch_nums[phase] * Config.train_batch_size)))
+            print("false_positive percent is {}".format(
+                str(false_positive / epoch_nums[phase] * Config.train_batch_size)))
 
             epoch_loss[phase] = running_loss / epoch_nums[phase]
             epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
@@ -303,8 +305,8 @@ class CusRandomSampler(Sampler):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
         res = []
         for i in range(self.iter_num):
-            res.extend(sample(even_list, self.batch_size // 4))
-            res.extend([1] * (self.batch_size - (self.batch_size // 4)))
+            res.extend(sample(even_list, self.batch_size // 2))
+            res.extend([1] * (self.batch_size - (self.batch_size // 2)))
 
         return iter(res)
 
