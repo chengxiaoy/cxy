@@ -349,6 +349,7 @@ if __name__ == '__main__':
 
     weights = [1.0] * (Config.train_batch_size // 2)
     weights.extend([0.5] * (Config.train_batch_size // 2))
+    weights = torch.Tensor(weights)
     criterion = nn.BCELoss(weights)
 
     optim_params = []
