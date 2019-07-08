@@ -262,7 +262,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]))
-            print('{} true_negative:{} false_positive:{}'.format(phase, epoch_true_negative[phase],
+            print('{} true_negative:{:.4f} false_positive:{:.4f}'.format(phase, epoch_true_negative[phase],
                                                                  epoch_false_positive[phase]))
 
             # deep copy the model
