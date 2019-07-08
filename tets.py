@@ -59,7 +59,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='imagenet')
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
@@ -347,8 +347,12 @@ if __name__ == '__main__':
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
     model = SiameseNetwork(False).to(device)
 
-    weights = [1.0] * (Config.train_batch_size // 2)
-    weights.extend([0.5] * (Config.train_batch_size // 2))
+
+    weights = []
+    for i in range(Config.train_batch_size // 2):
+        weights.append([1.0])
+    for i in range(Config.train_batch_size // 2):
+        weights.append([0.5])
     weights = torch.Tensor(weights).to(device)
     criterion = nn.BCELoss(weights)
 
