@@ -268,6 +268,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             # deep copy the model
             if phase == 'val' and epoch_loss[phase] < min_loss:
                 min_loss = epoch_loss[phase]
+                torch.save(model.state_dict(), str(model) + "loss.pth")
 
             if phase == 'val' and epoch_acc[phase] > max_acc:
                 max_acc = epoch_acc[phase]
