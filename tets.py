@@ -352,7 +352,7 @@ if __name__ == '__main__':
     for i in range(Config.train_batch_size // 2):
         weights.append([1.0])
     for i in range(Config.train_batch_size // 2):
-        weights.append([0.5])
+        weights.append([0.7])
     weights = torch.Tensor(weights).to(device)
     criterion = nn.BCELoss(weights)
 
