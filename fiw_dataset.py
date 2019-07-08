@@ -8,6 +8,8 @@ import PIL
 from PIL import Image
 import torchvision
 import torch
+from tricks import tricks
+from sklearn.model_selection import train_test_split
 
 mean_bgr = np.array([91.4953, 103.8827, 131.0912])  # from resnet50_ft.prototxt
 mean_rgb = np.array([131.0912, 103.8827, 91.4953])
@@ -34,11 +36,12 @@ def loader(image_file, split, argument=False):
         if split == 'train':
             # img = torchvision.transforms.Resize(197)(img),
             trans = torchvision.transforms.Compose([
-                torchvision.transforms.RandomCrop(197),
-                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.Resize(197),
+                # torchvision.transforms.RandomGrayscale(p=0.2),
                 # torchvision.transforms.RandomRotation(90),
-                torchvision.transforms.RandomHorizontalFlip(0.5),
-                torchvision.transforms.RandomVerticalFlip(0.5),
+                # torchvision.transforms.RandomHorizontalFlip(0.5),
+                # torchvision.transforms.RandomVerticalFlip(0.5),
+                tricks.RandomErasing(mean=mean_rgb)
             ])
             img = trans(img)
 
@@ -59,6 +62,9 @@ def get_data():
 
     all_images = glob(train_folders_path + "*/*/*.jpg")
     all_images = [x.replace('\\', '/') for x in all_images]
+
+    # train_images, val_images = train_test_split(all_images, test_size=0.1)
+
     train_images = [x for x in all_images if val_famillies not in x]
     val_images = [x for x in all_images if val_famillies in x]
 
@@ -80,6 +86,7 @@ def get_data():
 
     train = [x for x in relationships if val_famillies not in x[0]]
     val = [x for x in relationships if val_famillies in x[0]]
+
     return train, train_person_to_images_map, val, val_person_to_images_map
 
 

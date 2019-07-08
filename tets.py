@@ -61,7 +61,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
-        self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
+        # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
@@ -72,8 +72,9 @@ class SiameseNetwork(nn.Module):
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(4096, 512, 1)
+        self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
+        self.globalmax = nn.AdaptiveMaxPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
@@ -81,8 +82,8 @@ class SiameseNetwork(nn.Module):
 
     def forward_once(self, input):
         x = self.pretrained_model(input)
-        x_1 = self.pretrained_model2(input)
-        x = torch.cat([x, x_1], 1)
+        # x_1 = self.pretrained_model2(input)
+        # x = torch.cat([x, x_1], 1)
         return x
 
     def forward(self, input1, input2, visual_info):
@@ -144,8 +145,14 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
+        # output1_max = self.globalmax(output1)
+        # output2_max = self.globalmax(output2)
+
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
+
+        # output1 = torch.cat([output1_max, output1_avg], 1)
+        # output2 = torch.cat([output2_max, output2_avg], 1)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
@@ -255,6 +262,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             if phase == 'val' and epoch_acc[phase] > max_acc:
                 max_acc = epoch_acc[phase]
                 best_model_wts = copy.deepcopy(model.state_dict())
+                torch.save(model.state_dict(), str(model) + ".pth")
         writer.add_scalars('data/loss', {'train': epoch_loss['train'], 'val': epoch_loss['val']}, epoch)
         writer.add_scalars('data/acc', {'train': epoch_acc['train'], 'val': epoch_acc['val']}, epoch)
         # writer.add_scalar('data/loss', scheduler.get_lr())
@@ -298,7 +306,6 @@ if __name__ == '__main__':
     # img1 = loader('face.jpg', 'extract').unsqueeze(0)
 
     # img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    model = SiameseNetwork(False).to(device)
     # model.forward_once(img1)
     # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
     #
@@ -322,6 +329,7 @@ if __name__ == '__main__':
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
+    model = SiameseNetwork(False).to(device)
 
     criterion = nn.BCELoss()
 
@@ -347,7 +355,8 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
