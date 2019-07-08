@@ -32,8 +32,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 32
+    val_batch_size = 32
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -285,8 +285,8 @@ class CusRandomSampler(Sampler):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
         res = []
         for i in range(self.iter_num):
-            res.extend(sample(even_list, self.batch_size // 2))
-            res.extend([1] * (self.batch_size // 2))
+            res.extend(sample(even_list, self.batch_size // 4))
+            res.extend([1] * (self.batch_size - (self.batch_size // 4)))
 
         return iter(res)
 
