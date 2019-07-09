@@ -30,7 +30,7 @@ writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime(
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 device_ids = [2, 3]
 
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -61,7 +61,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2').cuda().half()
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
@@ -70,11 +70,11 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(1024, 1024, 1024)
+        self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(2048, 1024, 1)
+        self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
@@ -230,13 +230,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 if i == epoch_nums[phase]:
                     break
-                # img1 = img1.to(device)
-                # img2 = img2.to(device)
-                # target = target.to(device)
+                img1 = img1.to(device)
+                img2 = img2.to(device)
+                target = target.to(device)
 
-                img1 = img1.cuda(device=device_ids[0]).half()
-                img2 = img2.cuda(device=device_ids[0]).half()
-                target = target.cuda(device=device_ids[0]).half()
+                # img1 = img1.cuda(device=device_ids[0]).half()
+                # img2 = img2.cuda(device=device_ids[0]).half()
+                # target = target.cuda(device=device_ids[0]).half()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -344,8 +344,10 @@ if __name__ == '__main__':
 
     model = SiameseNetwork(False)
 
-    model = nn.DataParallel(model, device_ids=device_ids)
-    model.cuda(device=device_ids[0]).half()
+    # model = nn.DataParallel(model, device_ids=device_ids)
+    #     # model.cuda(device=device_ids[0]).half()
+
+    model.to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
