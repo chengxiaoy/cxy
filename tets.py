@@ -73,7 +73,7 @@ class SiameseNetwork(nn.Module):
         # self.ll = nn.Linear(2048, 512)
         self.ll = nn.Linear(2048, 100)
 
-        self.ll3 = nn.Linear(100,1)
+        self.ll3 = nn.Linear(100, 1)
 
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
@@ -181,7 +181,11 @@ class SiameseNetwork(nn.Module):
         output = self.dropout2(output)
         output = self.globalavg(output)
         output = self.ll(output)
-        x = self.relu(x)
+        output = self.relu(output)
+        output = self.dropout(output)
+        output = self.ll3(output)
+        return self.sigmod(output)
+
 
 
     def __repr__(self):
