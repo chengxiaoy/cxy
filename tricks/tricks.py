@@ -68,9 +68,9 @@ class RandomErasing(object):
 
                 img = np.array(img)
 
-                img[0, y1:y1 + w, x1:x1 + h] = self.mean[0]
-                img[1, y1:y1 + w, x1:x1 + h] = self.mean[1]
-                img[2, y1:y1 + w, x1:x1 + h] = self.mean[2]
+                img[y1:y1 + w, x1:x1 + h, 0] = self.mean[0]
+                img[y1:y1 + w, x1:x1 + h, 1] = self.mean[1]
+                img[y1:y1 + w, x1:x1 + h, 2] = self.mean[2]
 
                 img = Image.fromarray(img.astype('uint8')).convert('RGB')
                 return img
