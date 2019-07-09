@@ -356,7 +356,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCELoss()
+    criterion = nn.BCELoss().half()
 
     optim_params = []
 
