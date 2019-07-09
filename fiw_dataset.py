@@ -63,7 +63,7 @@ def get_data_kfold(k=5):
     all_images = glob(train_folders_path + "*/*/*.jpg")
     all_images = [x.replace('\\', '/') for x in all_images]
 
-    families = [x.split("/")[-3] for x in all_images]
+    families = set([x.split("/")[-3] for x in all_images])
     families = np.array(families)
 
     kf = KFold(n_splits=k, shuffle=False)
