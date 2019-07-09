@@ -349,13 +349,14 @@ if __name__ == '__main__':
     model = SiameseNetwork(False).to(device)
 
 
-    weights = []
-    for i in range(Config.train_batch_size // 2):
-        weights.append([2.0])
-    for i in range(Config.train_batch_size // 2):
-        weights.append([1.0])
-    weights = torch.Tensor(weights).to(device)
-    criterion = nn.BCELoss(weights)
+    # weights = []
+    # for i in range(Config.train_batch_size // 2):
+    #     weights.append([2.0])
+    # for i in range(Config.train_batch_size // 2):
+    #     weights.append([1.0])
+    # weights = torch.Tensor(weights).to(device)
+    # criterion = nn.BCELoss(weights)
+    criterion = nn.BCELoss()
 
     optim_params = []
 
