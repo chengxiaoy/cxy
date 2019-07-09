@@ -338,7 +338,7 @@ if __name__ == '__main__':
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    model = SiameseNetwork(False).to(device)
+    model = SiameseNetwork(False)
 
     model = nn.DataParallel(model.cuda())
     model.to(device)
