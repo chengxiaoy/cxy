@@ -84,6 +84,8 @@ class SiameseNetwork(nn.Module):
         self.bn1 = nn.BatchNorm2d(512)
         self.bn2 = nn.BatchNorm1d(2048)
 
+        self.conv0 = nn.Conv2d(4096, 2048, 1)
+
     def forward_once(self, input):
         x = self.pretrained_model(input)
         # x_1 = self.pretrained_model2(input)
@@ -177,7 +179,7 @@ class SiameseNetwork(nn.Module):
         output2 = self.forward_once(input2)
         output = torch.cat([output1, output2], dim=1)
 
-        output = nn.Conv2d(4096, 2048, 1)(output)
+        output = self.conv0(output)
         output = self.bn2(output)
         output = self.dropout2(output)
         output = self.globalavg(output)
