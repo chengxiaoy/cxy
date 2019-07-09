@@ -82,7 +82,7 @@ class SiameseNetwork(nn.Module):
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
-        self.bn2 = nn.BatchNorm1d(2048)
+        self.bn2 = nn.BatchNorm2d(2048)
 
         self.conv0 = nn.Conv2d(4096, 2048, 1)
 
