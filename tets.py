@@ -190,7 +190,7 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
-        x = self.sigmod(x)
+        # x = self.sigmod(x)
         return x
 
     def __repr__(self):
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCELoss().half()
+    criterion = nn.BCEWithLogitsLoss().half()
 
     optim_params = []
 
