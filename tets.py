@@ -59,7 +59,7 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 class SiameseNetwork(nn.Module):
     def __init__(self, include_top=False):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2').half()
+        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
@@ -228,9 +228,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 if i == epoch_nums[phase]:
                     break
-                img1 = img1.to(device).half()
-                img2 = img2.to(device).half()
-                target = target.to(device).half()
+                img1 = img1.to(device)
+                img2 = img2.to(device)
+                target = target.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCELoss().half()
+    criterion = nn.BCELoss()
 
     optim_params = []
 
