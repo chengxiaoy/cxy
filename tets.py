@@ -14,7 +14,8 @@ import torch
 import torch.nn.functional as F
 import time
 import copy
-from torch.optim import Adam
+from torch.optim import Adam, SGD
+
 from fiw_dataset import *
 from torch.utils.data import RandomSampler, Sampler
 
@@ -374,8 +375,8 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
-    # optimizer = Adam(model.parameters(), lr=0.00001)
+    optimizer = SGD(model.parameters(), lr=0.00001)
+    # optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
