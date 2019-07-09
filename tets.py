@@ -30,7 +30,7 @@ writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime(
 os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
 device_ids = [2, 3]
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
