@@ -27,8 +27,9 @@ import math
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
+device_ids = [2, 3]
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(("cuda:" + str(device_ids[0])) if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -68,11 +69,11 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(100, 1)
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
+        self.bilinear = nn.Bilinear(1024, 1024, 1024)
         self.lll = nn.Linear(1024, 100)
         self.ll = nn.Linear(2048, 512)
 
-        self.conv = nn.Conv2d(2048, 512, 1)
+        self.conv = nn.Conv2d(2048, 1024, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
@@ -320,15 +321,6 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    # img1 = loader('face.jpg', 'extract').unsqueeze(0)
-
-    # img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    # model.forward_once(img1)
-    # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
-    #
-    # res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()
-    # print(res)
-
     train, train_map, val, val_map = get_data()
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
@@ -338,8 +330,6 @@ if __name__ == '__main__':
                                   sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
                                   )
 
-
-
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
                                 sampler=CusRandomSampler(Config.train_batch_size, 100, len(val)),
@@ -348,6 +338,9 @@ if __name__ == '__main__':
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
     model = SiameseNetwork(False).to(device)
+
+    model = nn.DataParallel(model, device_ids=device_ids)
+    model.to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
