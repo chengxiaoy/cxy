@@ -27,7 +27,7 @@ import math
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 device_ids = [0, 1]
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -340,7 +340,8 @@ if __name__ == '__main__':
 
     model = SiameseNetwork(False)
 
-    model = nn.DataParallel(model, device_ids=device_ids)
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model, device_ids=[0, 1])
     model.to(device)
 
     # weights = []
