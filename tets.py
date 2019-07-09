@@ -70,7 +70,10 @@ class SiameseNetwork(nn.Module):
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
-        self.ll = nn.Linear(2048, 512)
+        # self.ll = nn.Linear(2048, 512)
+        self.ll = nn.Linear(2048, 100)
+
+        self.ll3 = nn.Linear(100,1)
 
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
@@ -78,7 +81,7 @@ class SiameseNetwork(nn.Module):
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
-        self.bn2 = nn.BatchNorm1d(512)
+        self.bn2 = nn.BatchNorm1d(2048)
 
     def forward_once(self, input):
         x = self.pretrained_model(input)
@@ -168,27 +171,18 @@ class SiameseNetwork(nn.Module):
         x = self.sigmod(x)
         return x
 
-    def forward_bilinear(self, input1, input2):
+    def forward_concat(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
+        output = torch.cat([output1, output2], dim=1)
 
-        output1 = self.globalavg(output1)
-        output2 = self.globalavg(output2)
-
-        output1 = output1.view(output1.size(0), -1)
-        output2 = output2.view(output2.size(0), -1)
-        output1 = self.ll(output1)
-        output2 = self.ll(output2)
-
-        x = self.bilinear(output1, output2)
-
-        # x = self.bn2(x)
-        x = self.lll(x)
+        output = nn.Conv2d(4096, 2048, 1)(output)
+        output = self.bn2(output)
+        output = self.dropout2(output)
+        output = self.globalavg(output)
+        output = self.ll(output)
         x = self.relu(x)
-        x = self.dropout(x)
-        x = self.ll2(x)
-        x = self.sigmod(x)
-        return x
+
 
     def __repr__(self):
         return self.__class__.__name__
