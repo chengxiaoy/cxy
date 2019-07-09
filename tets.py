@@ -27,10 +27,10 @@ import math
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
-os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
-device_ids = [2, 3]
+os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+device_ids = [0, 1]
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
