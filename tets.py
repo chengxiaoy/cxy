@@ -375,7 +375,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = SGD(model.parameters(), lr=0.001)
+    optimizer = SGD(model.parameters(), lr=0.0001)
     # optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
     # optimizer = Adam(optim_params, lr=0.00001)
 
