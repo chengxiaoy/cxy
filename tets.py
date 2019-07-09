@@ -263,7 +263,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                             epoch)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]))
             print('{} true_negative:{:.4f} false_positive:{:.4f}'.format(phase, epoch_true_negative[phase],
-                                                                 epoch_false_positive[phase]))
+                                                                         epoch_false_positive[phase]))
 
             # deep copy the model
             if phase == 'val' and epoch_loss[phase] < min_loss:
@@ -338,7 +338,7 @@ if __name__ == '__main__':
                                   sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
                                   )
 
-    print(len(train_dataloader))
+
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
@@ -346,8 +346,8 @@ if __name__ == '__main__':
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
-    model = SiameseNetwork(False).to(device)
 
+    model = SiameseNetwork(False).to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
@@ -380,8 +380,8 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
