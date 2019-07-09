@@ -32,8 +32,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 32
-    val_batch_size = 32
+    train_batch_size = 16
+    val_batch_size = 16
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -320,15 +320,6 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    # img1 = loader('face.jpg', 'extract').unsqueeze(0)
-
-    # img2 = loader('face.jpg', 'extract').unsqueeze(0)
-    # model.forward_once(img1)
-    # # print(model.forward_bilinear(img1,img2).data.cpu().numpy())
-    #
-    # res = model(img1.to(device), img2.to(device), [False, 0]).data.cpu().numpy()
-    # print(res)
-
     train, train_map, val, val_map = get_data()
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
@@ -338,8 +329,6 @@ if __name__ == '__main__':
                                   sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
                                   )
 
-
-
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
                                 sampler=CusRandomSampler(Config.train_batch_size, 100, len(val)),
@@ -347,7 +336,7 @@ if __name__ == '__main__':
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    model = SiameseNetwork(False).to(device).half()
+    model = SiameseNetwork(False).to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):

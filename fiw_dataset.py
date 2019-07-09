@@ -10,6 +10,7 @@ import torchvision
 import torch
 from tricks import tricks
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 
 mean_bgr = np.array([91.4953, 103.8827, 131.0912])  # from resnet50_ft.prototxt
 mean_rgb = np.array([131.0912, 103.8827, 91.4953])
@@ -53,6 +54,50 @@ def loader(image_file, split, argument=False):
 
     img = np.array(img, dtype=np.uint8)
     return transform(img)
+
+
+def get_data_kfold(k=5):
+    train_file_path = "Faces_in_the_Wild/train_relationships.csv"
+    train_folders_path = "Faces_in_the_Wild/train/"
+
+    all_images = glob(train_folders_path + "*/*/*.jpg")
+    all_images = [x.replace('\\', '/') for x in all_images]
+
+    families = [x.split("/")[-3] for x in all_images]
+    families = np.array(families)
+
+    kf = KFold(n_splits=k, shuffle=False)
+    for train_indexs, val_indexs in kf.split(families):
+        val_families = families[val_indexs]
+
+        val_images = []
+        for val_family in val_families:
+            val_images.extend([x for x in all_images if val_family in x])
+
+        train_images = [x for x in all_images if x not in val_images]
+
+        train_person_to_images_map = defaultdict(list)
+
+        ppl = [x.split("/")[-3] + "/" + x.split("/")[-2] for x in all_images]
+
+        for x in train_images:
+            train_person_to_images_map[x.split("/")[-3] + "/" + x.split("/")[-2]].append(x)
+
+        val_person_to_images_map = defaultdict(list)
+
+        for x in val_images:
+            val_person_to_images_map[x.split("/")[-3] + "/" + x.split("/")[-2]].append(x)
+
+        relationships = pd.read_csv(train_file_path)
+        relationships = list(zip(relationships.p1.values, relationships.p2.values))
+        relationships = [x for x in relationships if x[0] in ppl and x[1] in ppl]
+
+        val = []
+        for val_family in val_families:
+            val.extend([x for x in relationships if val_family in x[0]])
+        train = [x for x in relationships if x not in val]
+
+        yield train, train_person_to_images_map, val, val_person_to_images_map
 
 
 def get_data():
