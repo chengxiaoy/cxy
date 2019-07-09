@@ -23,6 +23,7 @@ import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
 import math
+from submit import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -370,3 +371,4 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
+    get_submit()
