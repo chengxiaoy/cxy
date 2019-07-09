@@ -66,14 +66,14 @@ class SiameseNetwork(nn.Module):
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
-        self.ll2 = nn.Linear(50, 1)
+        self.ll2 = nn.Linear(100, 1)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
         # self.ll = nn.Linear(2048, 512)
         self.ll = nn.Linear(2048, 100)
 
-        self.ll3 = nn.Linear(100,1)
+        self.ll3 = nn.Linear(100, 1)
 
         self.conv = nn.Conv2d(2048, 512, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
@@ -168,7 +168,7 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
-        x = self.sigmod(x)
+        # x = self.sigmod(x)
         return x
 
     def forward_concat(self, input1, input2):
@@ -180,9 +180,13 @@ class SiameseNetwork(nn.Module):
         output = self.bn2(output)
         output = self.dropout2(output)
         output = self.globalavg(output)
+        output = output.view(output.size(0), -1)
         output = self.ll(output)
+        x = self.relu(output)
+        x = self.dropout(x)
+        x = self.ll2(x)
+        x = self.sigmod(x)
         x = self.relu(x)
-
 
     def __repr__(self):
         return self.__class__.__name__
@@ -338,7 +342,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
 
     optim_params = []
 
