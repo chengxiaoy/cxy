@@ -228,9 +228,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 if i == epoch_nums[phase]:
                     break
-                img1 = img1.to(device)
-                img2 = img2.to(device)
-                target = target.to(device)
+                img1 = img1.to(device).half()
+                img2 = img2.to(device).half()
+                target = target.to(device).half()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -347,7 +347,7 @@ if __name__ == '__main__':
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    model = SiameseNetwork(False).to(device)
+    model = SiameseNetwork(False).to(device).half()
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
