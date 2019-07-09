@@ -28,7 +28,7 @@ import math
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
-device_ids = [0, 1]
+device_ids = [2, 3]
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -230,9 +230,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             for i, (img1, img2, target) in enumerate(dataloaders[phase]):
                 if i == epoch_nums[phase]:
                     break
-                img1 = img1.to(device)
-                img2 = img2.to(device)
-                target = target.to(device)
+                # img1 = img1.to(device)
+                # img2 = img2.to(device)
+                # target = target.to(device)
+
+                img1 = img1.cuda(device=device_ids[0])
+                img2 = img2.cuda(device=device_ids[0])
+                target = target.cuda(device=device_ids[0])
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -340,9 +344,8 @@ if __name__ == '__main__':
 
     model = SiameseNetwork(False)
 
-    if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model, device_ids=[0, 1])
-    model.to(device)
+    model = nn.DataParallel(model, device_ids=device_ids)
+    model.cuda(device=device_ids[0])
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
