@@ -340,7 +340,7 @@ if __name__ == '__main__':
 
     model = SiameseNetwork(False)
 
-    model = nn.DataParallel(model.cuda())
+    model = nn.DataParallel(model, device_ids=device_ids)
     model.to(device)
 
     # weights = []
