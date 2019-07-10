@@ -75,18 +75,18 @@ class SiameseNetwork(nn.Module):
 
         self.ll3 = nn.Linear(100, 1)
 
-        self.conv = nn.Conv2d(2048, 512, 1)
+        self.conv = nn.Conv2d(2048, 2048, 1)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
-        self.bn1 = nn.BatchNorm2d(512)
+        self.bn1 = nn.BatchNorm2d(2048)
 
-        self.conv_sw1 = nn.Conv2d(512, 30, 1)
-        self.sw1_bn = nn.BatchNorm2d(30)
+        self.conv_sw1 = nn.Conv2d(2048, 512, 1)
+        self.sw1_bn = nn.BatchNorm2d(512)
         self.sw1_activation = nn.ReLU()
 
-        self.conv_sw2 = nn.Conv2d(30, 1, 1)
+        self.conv_sw2 = nn.Conv2d(512, 1, 1)
         self.sw2_activation = nn.Softplus()
 
     def forward_once(self, input):
