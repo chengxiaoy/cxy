@@ -90,8 +90,8 @@ class SiameseNetwork(nn.Module):
 
     def forward(self, input1, input2, visual_info):
         # return self.forward_baseline(input1, input2, visual_info)
-        # return self.forward_compact_bilinear(input1, input2)
-        return self.forward_concat(input1, input2)
+        return self.forward_compact_bilinear(input1, input2)
+        # return self.forward_concat(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
