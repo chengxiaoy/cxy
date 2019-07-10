@@ -23,6 +23,7 @@ import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
 import math
+from submit import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -70,8 +71,7 @@ class SiameseNetwork(nn.Module):
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
-        # self.ll = nn.Linear(2048, 512)
-        self.ll = nn.Linear(2048, 100)
+        self.ll = nn.Linear(1024, 100)
 
         self.ll3 = nn.Linear(100, 1)
 
@@ -81,7 +81,6 @@ class SiameseNetwork(nn.Module):
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
-        self.bn2 = nn.BatchNorm1d(2048)
 
     def forward_once(self, input):
         x = self.pretrained_model(input)
@@ -91,8 +90,8 @@ class SiameseNetwork(nn.Module):
 
     def forward(self, input1, input2, visual_info):
         # return self.forward_baseline(input1, input2, visual_info)
-        return self.forward_compact_bilinear(input1, input2)
-        # return self.forward_bilinear(input1, input2)
+        # return self.forward_compact_bilinear(input1, input2)
+        return self.forward_concat(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -134,7 +133,7 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
-        x = self.sigmod(x)
+        # x = self.sigmod(x)
         return x
 
     def forward_compact_bilinear(self, input1, input2):
@@ -148,14 +147,8 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        # output1_max = self.globalmax(output1)
-        # output2_max = self.globalmax(output2)
-
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
-
-        # output1 = torch.cat([output1_max, output1_avg], 1)
-        # output2 = torch.cat([output2_max, output2_avg], 1)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
@@ -168,25 +161,8 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
         x = self.ll2(x)
-        x = self.sigmod(x)
+        # x = self.sigmod(x)
         return x
-
-    def forward_concat(self, input1, input2):
-        output1 = self.forward_once(input1)
-        output2 = self.forward_once(input2)
-        output = torch.cat([output1, output2], dim=1)
-
-        output = nn.Conv2d(4096, 2048, 1)(output)
-        output = self.bn2(output)
-        output = self.dropout2(output)
-        output = self.globalavg(output)
-        output = self.ll(output)
-        output = self.relu(output)
-        output = self.dropout(output)
-        output = self.ll3(output)
-        return self.sigmod(output)
-
-
 
     def __repr__(self):
         return self.__class__.__name__
@@ -319,7 +295,7 @@ class CusRandomSampler(Sampler):
 if __name__ == '__main__':
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', True), 'val': FaceDataSet(val, val_map, 'val', True)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
@@ -342,7 +318,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
 
     optim_params = []
 
@@ -371,3 +347,4 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
+    get_submit()
