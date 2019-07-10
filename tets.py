@@ -24,6 +24,7 @@ from tensorboardX import SummaryWriter
 from datetime import datetime
 import math
 from submit import *
+from tricks.tricks import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -76,6 +77,8 @@ class SiameseNetwork(nn.Module):
         self.ll3 = nn.Linear(100, 1)
 
         self.conv = nn.Conv2d(2048, 512, 1)
+
+        self.selayer = SELayer(2048)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
@@ -159,6 +162,8 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
+        output1 = self.selayer(output1)
+        output2 = self.selayer(output2)
 
         output1 = self.conv(output1)
         output2 = self.conv(output2)
