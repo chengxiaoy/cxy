@@ -67,7 +67,7 @@ class SiameseNetwork(nn.Module):
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.3)
+        self.dropout = nn.Dropout(0.01)
         self.ll2 = nn.Linear(50, 1)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
@@ -85,7 +85,7 @@ class SiameseNetwork(nn.Module):
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
-        self.conv_sw1 = nn.Conv2d(512, 50, 1)
+        self.conv_sw1 = nn.Conv2d(2048, 50, 1)
         self.sw1_bn = nn.BatchNorm2d(50)
         self.sw1_activation = nn.ReLU()
 
@@ -114,7 +114,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_baseline(input1,input2,None)
+        # return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -129,6 +130,8 @@ class SiameseNetwork(nn.Module):
         #     writer.add_image('Image', x, visual_info[1])
 
         output2 = self.forward_once(input2)
+        output1 = self.forward_spatial_weight(output1)
+        output2 = self.forward_spatial_weight(output2)
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
