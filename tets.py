@@ -78,7 +78,7 @@ class SiameseNetwork(nn.Module):
 
         self.conv = nn.Conv2d(2048, 512, 1)
 
-        self.selayer = SELayer(2048)
+        self.selayer = SELayer(512)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
@@ -162,8 +162,7 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        output1 = self.selayer(output1)
-        output2 = self.selayer(output2)
+
 
         output1 = self.conv(output1)
         output2 = self.conv(output2)
@@ -174,7 +173,8 @@ class SiameseNetwork(nn.Module):
 
         output1 = self.forward_spatial_weight(output1)
         output2 = self.forward_spatial_weight(output2)
-
+        output1 = self.selayer(output1)
+        output2 = self.selayer(output2)
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
 
