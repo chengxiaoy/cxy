@@ -82,16 +82,36 @@ class SiameseNetwork(nn.Module):
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
+        self.conv_sw1 = nn.Conv2d(2048, 512, 1)
+        self.sw1_bn = nn.BatchNorm2d(512)
+        self.sw1_activation = nn.ReLU()
+
+        self.conv_sw2 = nn.Conv2d(512, 1, 1)
+        self.sw2_activation = nn.Softplus()
+
     def forward_once(self, input):
         x = self.pretrained_model(input)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
         return x
 
+    def forward_spatial_weight(self, input):
+        """
+        input is the feature map need spatial weight
+        :param input:
+        :return:
+        """
+        input_sw1 = self.conv_sw1(input)
+        input_sw1 = self.sw1_bn(input_sw1)
+        input_sw1 = self.sw1_activation(input_sw1)
+
+        input_sw2 = self.conv_sw2(input_sw1)
+        input_sw2 = self.sw2_activation(input_sw2)
+
+        return torch.mul(input, input_sw2)
+
     def forward(self, input1, input2, visual_info):
-        # return self.forward_baseline(input1, input2, visual_info)
         return self.forward_compact_bilinear(input1, input2)
-        # return self.forward_concat(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -139,6 +159,9 @@ class SiameseNetwork(nn.Module):
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
+
+        output1 = self.forward_spatial_weight(output1)
+        output2 = self.forward_spatial_weight(output2)
 
         output1 = self.conv(output1)
         output2 = self.conv(output2)
