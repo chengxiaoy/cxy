@@ -82,11 +82,11 @@ class SiameseNetwork(nn.Module):
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
-        self.conv_sw1 = nn.Conv2d(2048, 512, 1)
-        self.sw1_bn = nn.BatchNorm2d(512)
+        self.conv_sw1 = nn.Conv2d(512, 30, 1)
+        self.sw1_bn = nn.BatchNorm2d(30)
         self.sw1_activation = nn.ReLU()
 
-        self.conv_sw2 = nn.Conv2d(512, 1, 1)
+        self.conv_sw2 = nn.Conv2d(30, 1, 1)
         self.sw2_activation = nn.Softplus()
 
     def forward_once(self, input):
@@ -160,15 +160,15 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
-
         output1 = self.conv(output1)
         output2 = self.conv(output2)
         output1 = self.bn1(output1)
         output2 = self.bn1(output2)
         output1 = self.relu(output1)
         output2 = self.relu(output2)
+
+        output1 = self.forward_spatial_weight(output1)
+        output2 = self.forward_spatial_weight(output2)
 
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
