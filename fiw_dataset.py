@@ -49,7 +49,7 @@ def loader(image_file, split, argument=False):
         else:
             img = torchvision.transforms.Resize(197)(img)
     else:
-      img = torchvision.transforms.Resize(197)(img)
+        img = torchvision.transforms.Resize(197)(img)
 
     img = np.array(img, dtype=np.uint8)
     return transform(img)
@@ -161,6 +161,64 @@ class FaceDataSet(Dataset):
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
                     img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
                     return img1, img2, torch.Tensor([0])
+
+    def get_length(self):
+        length = 0
+        for key in self.label_images_map:
+            length = length + len(self.label_images_map[key])
+        return length
+
+    def __len__(self):
+        # if self.kind == 'train':
+        #     return self.length
+        return self.length
+
+
+class FaceDataSet_V2(Dataset):
+    def __init__(self, relations, label_images_map, kind, argument=False):
+        self.relations = relations
+        self.label_images_map = label_images_map
+        self.kind = kind
+        self.length = self.get_length()
+        self.argument = argument
+        self.family_label_map, self.label_map = self.get_family_label_map()
+
+    def get_family_label_map(self):
+        family_label_map = defaultdict(set)
+        for x in self.label_images_map:
+            family = x.split("/")[0]
+            family_label_map[family].add(x)
+
+        label_map = defaultdict(set)
+        for relation in self.relations:
+            label_map[relation[0]].add(relation[1])
+
+        return family_label_map, label_map
+
+    def __getitem__(self, index):
+        p1, p2 = self.relations[index % len(self.relations)]
+        img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
+        img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
+        family_id = p1.split("/")[0]
+        labels = set(self.family_label_map[family_id])
+        if len(labels) > 2:
+
+            labels.remove(p1)
+            labels.remove(p2)
+            i = 0
+            while i < 20:
+                i += 1
+                p3 = choice(labels)
+                if (p1, p3) not in self.relations and (p3, p1) not in self.relations and (
+                        p1, p2) not in self.relations and (p2, p1) not in self.relations:
+                    img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
+                    return img1, img2, img3, torch.Tensor([1])
+
+        family_set = set(self.family_label_map.keys())
+        family_set.remove(family_id)
+        p3 = choice(self.family_label_map[choice(family_set)])
+        img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
+        return img1, img2, img3, torch.Tensor([1])
 
     def get_length(self):
         length = 0
