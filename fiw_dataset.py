@@ -214,7 +214,7 @@ class FaceDataSet_V2(Dataset):
                     img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
                     return img1, img2, img3, torch.Tensor([1])
 
-        family_set = set(self.family_label_map.keys())
+        family_set = list(self.family_label_map.keys())
         family_set.remove(family_id)
         p3 = choice(self.family_label_map[choice(family_set)])
         img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
