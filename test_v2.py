@@ -184,7 +184,15 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 img1 = img1.to(device)
                 img2 = img2.to(device)
                 img3 = img3.to(device)
+
+                target = []
+                for num in range(Config.train_batch_size):
+                    target.append([1.0])
+                for num in range(2 * Config.train_batch_size):
+                    target.append([0.0])
+                target = torch.Tensor(target).float()
                 target = target.to(device)
+
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -194,8 +202,6 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     output1, output2, output3 = model(img1, img2, img3)
 
                     output = torch.cat([output1, output2, output3], 0)
-
-
 
                     loss = criterion(output, target)
 
