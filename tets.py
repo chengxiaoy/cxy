@@ -189,11 +189,11 @@ class SiameseNetwork(nn.Module):
 
         x = self.bilinear(output1, output2)
         x = self.relu(x)
-        # x = self.dropout2(x)
+        x = self.dropout2(x)
 
         x = self.lll(x)
         x = self.relu(x)
-        # x = self.dropout(x)
+        x = self.dropout(x)
         x = self.ll2(x)
         # x = self.sigmod(x)
         return x
