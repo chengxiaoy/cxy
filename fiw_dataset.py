@@ -196,7 +196,7 @@ class FaceDataSet_V2(Dataset):
         return family_label_map, label_map
 
     def __getitem__(self, index):
-        p1, p2 = self.relations[index % len(self.relations)]
+        p1, p2 = self.relations[int(index/2)]
         img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
         img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
         family_id = p1.split("/")[0]
