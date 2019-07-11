@@ -78,7 +78,7 @@ class SiameseNetwork(nn.Module):
 
         self.conv = nn.Conv2d(2048, 512, 1)
 
-        self.stn = STNLayer()
+        # self.stn = STNLayer()
 
         # self.selayer = SELayer(512)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
@@ -95,7 +95,7 @@ class SiameseNetwork(nn.Module):
         self.sw2_activation = nn.Softplus()
 
     def forward_once(self, input):
-        input = self.stn(input)
+        # input = self.stn(input)
         x = self.pretrained_model(input)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
@@ -189,11 +189,11 @@ class SiameseNetwork(nn.Module):
 
         x = self.bilinear(output1, output2)
         x = self.relu(x)
-        x = self.dropout2(x)
+        # x = self.dropout2(x)
 
         x = self.lll(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.ll2(x)
         # x = self.sigmod(x)
         return x
@@ -329,7 +329,7 @@ class CusRandomSampler(Sampler):
 if __name__ == '__main__':
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', True), 'val': FaceDataSet(val, val_map, 'val', True)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
