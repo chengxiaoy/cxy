@@ -85,7 +85,7 @@ class SiameseNetwork(nn.Module):
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
-        self.conv_sw1 = nn.Conv2d(2048, 50, 1)
+        self.conv_sw1 = nn.Conv2d(512, 50, 1)
         self.sw1_bn = nn.BatchNorm2d(50)
         self.sw1_activation = nn.ReLU()
 
