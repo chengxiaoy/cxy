@@ -78,7 +78,9 @@ class SiameseNetwork(nn.Module):
 
         self.conv = nn.Conv2d(2048, 512, 1)
 
-        self.selayer = SELayer(512)
+        self.stn = STNLayer()
+
+        # self.selayer = SELayer(512)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
@@ -93,6 +95,7 @@ class SiameseNetwork(nn.Module):
         self.sw2_activation = nn.Softplus()
 
     def forward_once(self, input):
+        input = self.stn(input)
         x = self.pretrained_model(input)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
@@ -173,8 +176,8 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        output1 = self.selayer(output1)
-        output2 = self.selayer(output2)
+        # output1 = self.selayer(output1)
+        # output2 = self.selayer(output2)
 
         output1 = self.forward_spatial_weight(output1)
         output2 = self.forward_spatial_weight(output2)
