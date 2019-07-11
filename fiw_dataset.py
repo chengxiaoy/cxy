@@ -172,7 +172,7 @@ class FaceDataSet(Dataset):
                 ii = 0
                 while ii < 10:
                     ii += 1
-                    fam = choice(self.family_label_map.keys())
+                    fam = choice(list(self.family_label_map.keys()))
                     p1, p2 = sample(self.family_label_map[fam], 2)
                     if p2 not in self.label_map[p1] and p1 not in self.label_map[p2]:
                         img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
