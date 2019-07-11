@@ -184,14 +184,14 @@ class FaceDataSet_V2(Dataset):
         self.family_label_map, self.label_map = self.get_family_label_map()
 
     def get_family_label_map(self):
-        family_label_map = defaultdict(set)
+        family_label_map = defaultdict(list)
         for x in self.label_images_map:
             family = x.split("/")[0]
-            family_label_map[family].add(x)
+            family_label_map[family].append(x)
 
-        label_map = defaultdict(set)
+        label_map = defaultdict(list)
         for relation in self.relations:
-            label_map[relation[0]].add(relation[1])
+            label_map[relation[0]].append(relation[1])
 
         return family_label_map, label_map
 
@@ -208,7 +208,7 @@ class FaceDataSet_V2(Dataset):
             i = 0
             while i < 20:
                 i += 1
-                p3 = choice(labels)
+                p3 = choice(list(labels))
                 if (p1, p3) not in self.relations and (p3, p1) not in self.relations and (
                         p1, p2) not in self.relations and (p2, p1) not in self.relations:
                     img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
