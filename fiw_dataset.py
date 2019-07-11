@@ -142,6 +142,19 @@ class FaceDataSet(Dataset):
         self.length = self.get_length()
         self.argument = argument
         self.same = True
+        self.family_label_map, self.label_map = self.get_family_label_map()
+
+    def get_family_label_map(self):
+        family_label_map = defaultdict(list)
+        for x in self.label_images_map:
+            family = x.split("/")[0]
+            family_label_map[family].append(x)
+
+        label_map = defaultdict(list)
+        for relation in self.relations:
+            label_map[relation[0]].append(relation[1])
+
+        return family_label_map, label_map
 
     def __getitem__(self, index):
 
@@ -156,6 +169,16 @@ class FaceDataSet(Dataset):
             return img1, img2, torch.Tensor([1])
         else:
             while True:
+                ii = 0
+                while ii < 10:
+                    ii += 1
+                    fam = choice(self.family_label_map)
+                    p1, p2 = sample(self.family_label_map[fam], 2)
+                    if p2 not in self.label_map[p1] and p1 not in self.label_map[p2]:
+                        img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
+                        img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
+                        return img1, img2, torch.Tensor([0])
+
                 p1, p4 = sample(self.label_images_map.keys(), 2)
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
@@ -196,7 +219,7 @@ class FaceDataSet_V2(Dataset):
         return family_label_map, label_map
 
     def __getitem__(self, index):
-        p1, p2 = self.relations[int(index/2)]
+        p1, p2 = self.relations[int(index / 2)]
         img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
         img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
         family_id = p1.split("/")[0]
