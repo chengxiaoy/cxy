@@ -100,6 +100,9 @@ class SELayer(nn.Module):
 class STNLayer(nn.Module):
 
     def __init__(self):
+        """
+        input is 3*197*197
+        """
         super(STNLayer, self).__init__()
         self.localization = nn.Sequential(
             nn.Conv2d(3, 5, kernel_size=8),
