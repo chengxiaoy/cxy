@@ -34,8 +34,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 16
-    val_batch_size = 16
+    train_batch_size = 32
+    val_batch_size = 32
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -320,7 +320,7 @@ class CusRandomSampler(Sampler):
     def __iter__(self):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
         random.shuffle(even_list)
-        even_list = even_list*3
+        even_list = even_list*6
         res = []
         for i in range(self.iter_num):
             same_size = self.batch_size // 2
@@ -385,9 +385,9 @@ if __name__ == '__main__':
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [15, 60, 100], 0.1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [15, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     train_model(model, criterion, optimizer, scheduler, data_loaders)
     get_submit()
