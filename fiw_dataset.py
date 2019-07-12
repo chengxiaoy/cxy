@@ -165,8 +165,8 @@ class FaceDataSet(Dataset):
         should_same = index % 2 == 0
         if should_same:
             p1, p2 = self.relations[int(index / 2)]
-            img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
-            img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
+            img1 = loader(choice(self.label_images_map[p1]), self.kind, True)
+            img2 = loader(choice(self.label_images_map[p2]), self.kind, True)
             return img1, img2, torch.Tensor([1])
         else:
             # if random.uniform(0, 1) > 0.9:
@@ -183,8 +183,8 @@ class FaceDataSet(Dataset):
             while True:
                 p1, p4 = sample(self.label_images_map.keys(), 2)
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
-                    img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
-                    img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
+                    img1 = loader(choice(self.label_images_map[p1]), self.kind, False)
+                    img2 = loader(choice(self.label_images_map[p4]), self.kind, False)
                     return img1, img2, torch.Tensor([0])
 
     def get_length(self):
