@@ -202,7 +202,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=100):
+def train_model(model, criterion, optimizers, scheduler, dataloaders, num_epochs=100):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -210,6 +210,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     max_acc = 0.0
     epoch_nums = {'train': 200, 'val': 100}
     for epoch in range(num_epochs):
+        if epoch < 15:
+            optimizer = optimizers[0]
+        else:
+            optimizer = optimizers[1]
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
@@ -329,7 +333,7 @@ class CusRandomSampler(Sampler):
 if __name__ == '__main__':
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', True), 'val': FaceDataSet(val, val_map, 'val', True)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
@@ -370,15 +374,17 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
+    optimizer1 = Adam(model.parameters(), lr=0.00001, amsgrad=True)
+    optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
+
     # optimizer = Adam(model.parameters(), lr=0.00001)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [30, 60, 100], 0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer1, [30, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    train_model(model, criterion, optimizer, scheduler, data_loaders)
+    train_model(model, criterion, [optimizer1, optimizer2], scheduler, data_loaders)
     get_submit()
