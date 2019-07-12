@@ -11,6 +11,7 @@ import torch
 from tricks import tricks
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+import random
 
 mean_bgr = np.array([91.4953, 103.8827, 131.0912])  # from resnet50_ft.prototxt
 mean_rgb = np.array([131.0912, 103.8827, 91.4953])
@@ -168,7 +169,7 @@ class FaceDataSet(Dataset):
             img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
             return img1, img2, torch.Tensor([1])
         else:
-            while True:
+            if random.uniform(0, 1) > 0.9:
                 ii = 0
                 while ii < 10:
                     ii += 1
@@ -180,11 +181,11 @@ class FaceDataSet(Dataset):
                             img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
                             return img1, img2, torch.Tensor([0])
 
-                p1, p4 = sample(self.label_images_map.keys(), 2)
-                if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
-                    img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
-                    img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
-                    return img1, img2, torch.Tensor([0])
+            p1, p4 = sample(self.label_images_map.keys(), 2)
+            if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
+                img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
+                img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)
+                return img1, img2, torch.Tensor([0])
 
     def get_length(self):
         length = 0
