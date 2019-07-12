@@ -202,7 +202,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizers, scheduler, dataloaders, num_epochs=100):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=100):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -210,10 +210,10 @@ def train_model(model, criterion, optimizers, scheduler, dataloaders, num_epochs
     max_acc = 0.0
     epoch_nums = {'train': 200, 'val': 100}
     for epoch in range(num_epochs):
-        if epoch < 15:
-            optimizer = optimizers[0]
-        else:
-            optimizer = optimizers[1]
+        # if epoch < 15:
+        #     optimizer = optimizers[0]
+        # else:
+        #     optimizer = optimizers[1]
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
@@ -319,10 +319,12 @@ class CusRandomSampler(Sampler):
 
     def __iter__(self):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+        even_list = random.shuffle(even_list) * 3
         res = []
         for i in range(self.iter_num):
-            res.extend(sample(even_list, self.batch_size // 2))
-            res.extend([1] * (self.batch_size - (self.batch_size // 2)))
+            same_size = self.batch_size // 2
+            res.extend(even_list[i * same_size:(i + 1) * same_size])
+            res.extend([1] * (self.batch_size - same_size))
 
         return iter(res)
 
@@ -374,17 +376,17 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer1 = Adam(model.parameters(), lr=0.00001, amsgrad=True)
-    optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
+    # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
     # optimizer = Adam(optim_params, lr=0.00001)
 
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer1, [30, 60, 100], 0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [15, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    train_model(model, criterion, [optimizer1, optimizer2], scheduler, data_loaders)
+    train_model(model, criterion, optimizer, scheduler, data_loaders)
     get_submit()
