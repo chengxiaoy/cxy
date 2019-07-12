@@ -34,8 +34,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
-    train_batch_size = 32
-    val_batch_size = 32
+    train_batch_size = 16
+    val_batch_size = 16
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
