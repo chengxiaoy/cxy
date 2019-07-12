@@ -1,5 +1,5 @@
-import resnet as ResNet
-import senet as SeNet
+from models import resnet as ResNet
+from models import senet as SeNet
 import utils
 from torchvision.transforms import transforms
 import torchvision
@@ -219,10 +219,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         else:
                             false_positive += 1
 
-            epoch_true_negative[phase] = true_negative / (epoch_nums[phase] * Config.train_batch_size)
-            epoch_false_positive[phase] = false_positive / (epoch_nums[phase] * Config.train_batch_size)
+            epoch_true_negative[phase] = true_negative / (epoch_nums[phase] * Config.train_batch_size*3)
+            epoch_false_positive[phase] = false_positive / (epoch_nums[phase] * Config.train_batch_size*3)
             epoch_loss[phase] = running_loss / epoch_nums[phase]
-            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size)
+            epoch_acc[phase] = running_corrects / (epoch_nums[phase] * Config.train_batch_size*3)
 
             writer.add_text('Text', '{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss[phase], epoch_acc[phase]),
                             epoch)
