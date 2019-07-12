@@ -225,19 +225,19 @@ class FaceDataSet_V2(Dataset):
         img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
         img2 = loader(choice(self.label_images_map[p2]), self.kind, self.argument)
         family_id = p1.split("/")[0]
-        labels = set(self.family_label_map[family_id])
-        if len(labels) > 2:
-
-            labels.remove(p1)
-            labels.remove(p2)
-            i = 0
-            while i < 20:
-                i += 1
-                p3 = choice(list(labels))
-                if (p1, p3) not in self.relations and (p3, p1) not in self.relations and (
-                        p1, p2) not in self.relations and (p2, p1) not in self.relations:
-                    img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
-                    return img1, img2, img3, torch.Tensor([1])
+        # labels = set(self.family_label_map[family_id])
+        # if len(labels) > 2 and random.uniform(0, 1) > 0.9:
+        #
+        #     labels.remove(p1)
+        #     labels.remove(p2)
+        #     i = 0
+        #     while i < 10:
+        #         i += 1
+        #         p3 = choice(list(labels))
+        #         if (p1, p3) not in self.relations and (p3, p1) not in self.relations and (
+        #                 p1, p2) not in self.relations and (p2, p1) not in self.relations:
+        #             img3 = loader(choice(self.label_images_map[p3]), self.kind, self.argument)
+        #             return img1, img2, img3, torch.Tensor([1])
 
         family_set = list(self.family_label_map.keys())
         family_set.remove(family_id)
