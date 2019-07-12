@@ -41,8 +41,8 @@ class Config():
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
-        resnet50_weight_file = 'resnet50_ft_weight.pkl'
-        senet_weight_file = 'senet50_ft_weight.pkl'
+        resnet50_weight_file = 'weights/resnet50_ft_weight.pkl'
+        senet_weight_file = 'weights/senet50_ft_weight.pkl'
 
         if model_name == 'resnet50':
             model = ResNet.resnet50(num_classes=N_IDENTITY, include_top=include_top).eval()
