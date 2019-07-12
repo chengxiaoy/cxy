@@ -179,8 +179,8 @@ class SiameseNetwork(nn.Module):
         # output1 = self.selayer(output1)
         # output2 = self.selayer(output2)
 
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
+        # output1 = self.forward_spatial_weight(output1)
+        # output2 = self.forward_spatial_weight(output2)
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
 
@@ -208,7 +208,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     best_model_wts = copy.deepcopy(model.state_dict())
     min_loss = float('inf')
     max_acc = 0.0
-    epoch_nums = {'train': 200, 'val': 70}
+    epoch_nums = {'train': 200, 'val': 100}
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
