@@ -254,8 +254,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if center_loss:
                         bce_loss = criterion(output, target)
                         target_ = target.squeeze()
-                        center_loss = center_loss(target_, output_)
-                        loss = bce_loss + center_loss
+                        centerloss = center_loss(target_, output_)
+                        loss = bce_loss + centerloss
                     else:
                         loss = criterion(output, target)
 
