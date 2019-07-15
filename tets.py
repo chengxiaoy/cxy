@@ -255,7 +255,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         bce_loss = criterion(output, target)
                         target_ = target.squeeze()
                         centerloss = center_loss(target_, output_)
-                        loss = bce_loss + centerloss
+                        loss = bce_loss + 0.05 * centerloss
                     else:
                         loss = criterion(output, target)
 
@@ -397,5 +397,6 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200, center_loss=CenterLoss(2, 50).to(device))
+    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,
+                center_loss=CenterLoss(2, 50).to(device))
     get_submit()
