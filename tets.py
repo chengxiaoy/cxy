@@ -193,16 +193,17 @@ class SiameseNetwork(nn.Module):
 
         x = self.lll(x)
         x = self.relu(x)
-        x = self.dropout(x)
-        x = self.ll2(x)
+        x_ = self.dropout(x)
+
+        x = self.ll2(x_)
         # x = self.sigmod(x)
-        return x
+        return x, x_
 
     def __repr__(self):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=200):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=200, center_loss=None):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -248,8 +249,10 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output = model(img1, img2, vision_info)
+                    output, output_ = model(img1, img2, vision_info)
                     loss = criterion(output, target)
+                    if center_loss:
+                        loss += center_loss(output_, target.squeeze())
 
                     if phase == 'train':
                         loss.backward()
@@ -320,7 +323,7 @@ class CusRandomSampler(Sampler):
     def __iter__(self):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
         random.shuffle(even_list)
-        even_list = even_list*6
+        even_list = even_list * 6
         res = []
         for i in range(self.iter_num):
             same_size = self.batch_size // 2
@@ -389,5 +392,5 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    train_model(model, criterion, optimizer, scheduler, data_loaders)
+    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200, center_loss=CenterLoss(2, 50))
     get_submit()
