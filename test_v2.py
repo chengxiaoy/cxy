@@ -25,6 +25,7 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
+from tricks.advance_loss import AngleLinear, AngleLoss
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -69,7 +70,7 @@ class SiameseNetwork(nn.Module):
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
         self.ll2 = nn.Linear(50, 2)
-        self.am_softmax = AMSoftmax(50, 2)
+        self.a_softmax = AngleLinear(50, 2)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
@@ -195,9 +196,7 @@ class SiameseNetwork(nn.Module):
         x = self.lll(x)
         x = self.relu(x)
         x_ = self.dropout(x)
-
-        x = self.am_softmax(x_)
-        # x = self.sigmod(x)
+        x = self.a_softmax(x_)
         return x, x_
 
     def __repr__(self):
@@ -244,6 +243,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 img1 = img1.to(device)
                 img2 = img2.to(device)
                 target = target.to(device)
+                target = target.squeeze().long()
+
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
@@ -263,13 +264,16 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+
+                    output = output[0]
+                    _, predicted = torch.max(output.data, 1)
+
                     running_loss = running_loss + loss.item()
-                    output = output.data.cpu().numpy()
-                    label = torch.max(output, 1, keepdim=True)
-                    for i, j in zip(label, target.data.cpu().numpy()):
-                        if i[0] == j[0]:
+
+                    for i, j in zip(predicted, target.data.cpu().numpy()):
+                        if i == j:
                             running_corrects += 1
-                        elif i[0]:
+                        elif i:
                             true_negative += 1
                         else:
                             false_positive += 1
@@ -368,7 +372,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion = AngleLoss()
 
     optim_params = []
 
