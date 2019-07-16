@@ -83,7 +83,7 @@ class AngleLoss(nn.Module):
         output[index] -= cos_theta[index] * (1.0 + 0) / (1 + self.lamb)
         output[index] += phi_theta[index] * (1.0 + 0) / (1 + self.lamb)
 
-        return F.cross_entropy(output, target)
+        return F.cross_entropy(output, target.squeeze())
 
         logpt = F.log_softmax(output, dim=1)
         logpt = logpt.gather(1, target)
@@ -96,83 +96,57 @@ class AngleLoss(nn.Module):
         return loss
 
 
-class sphere20a(nn.Module):
-    def __init__(self, classnum=10574, feature=False):
-        super(sphere20a, self).__init__()
-        self.classnum = classnum
-        self.feature = feature
-        # input = B*3*112*96
-        self.conv1_1 = nn.Conv2d(3, 64, 3, 2, 1)  # =>B*64*56*48
-        self.relu1_1 = nn.PReLU(64)
-        self.conv1_2 = nn.Conv2d(64, 64, 3, 1, 1)
-        self.relu1_2 = nn.PReLU(64)
-        self.conv1_3 = nn.Conv2d(64, 64, 3, 1, 1)
-        self.relu1_3 = nn.PReLU(64)
+class SphereMarginProduct(nn.Module):
+    def __init__(self, in_feature, out_feature, m=4, base=1000.0, gamma=0.0001, power=2, lambda_min=5.0, iter=0):
+        assert m in [1, 2, 3, 4], 'margin should be 1, 2, 3 or 4'
+        self.in_feature = in_feature
+        self.out_feature = out_feature
+        self.m = m
+        self.base = base
+        self.gamma = gamma
+        self.power = power
+        self.lambda_min = lambda_min
+        self.iter = 0
+        self.weight = Parameter(torch.Tensor(out_feature, in_feature))
+        nn.init.xavier_uniform_(self.weight)
 
-        self.conv2_1 = nn.Conv2d(64, 128, 3, 2, 1)  # =>B*128*28*24
-        self.relu2_1 = nn.PReLU(128)
-        self.conv2_2 = nn.Conv2d(128, 128, 3, 1, 1)
-        self.relu2_2 = nn.PReLU(128)
-        self.conv2_3 = nn.Conv2d(128, 128, 3, 1, 1)
-        self.relu2_3 = nn.PReLU(128)
+        # duplication formula
+        self.margin_formula = [
+            lambda x: x ** 0,
+            lambda x: x ** 1,
+            lambda x: 2 * x ** 2 - 1,
+            lambda x: 4 * x ** 3 - 3 * x,
+            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
+            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x
+        ]
 
-        self.conv2_4 = nn.Conv2d(128, 128, 3, 1, 1)  # =>B*128*28*24
-        self.relu2_4 = nn.PReLU(128)
-        self.conv2_5 = nn.Conv2d(128, 128, 3, 1, 1)
-        self.relu2_5 = nn.PReLU(128)
+    def forward(self, input, label):
+        self.iter += 1
+        self.cur_lambda = max(self.lambda_min, self.base * (1 + self.gamma * self.iter) ** (-1 * self.power))
 
-        self.conv3_1 = nn.Conv2d(128, 256, 3, 2, 1)  # =>B*256*14*12
-        self.relu3_1 = nn.PReLU(256)
-        self.conv3_2 = nn.Conv2d(256, 256, 3, 1, 1)
-        self.relu3_2 = nn.PReLU(256)
-        self.conv3_3 = nn.Conv2d(256, 256, 3, 1, 1)
-        self.relu3_3 = nn.PReLU(256)
+        cos_theta = F.linear(F.normalize(input), F.normalize(self.weight))
+        cos_theta = cos_theta(-1, 1)
 
-        self.conv3_4 = nn.Conv2d(256, 256, 3, 1, 1)  # =>B*256*14*12
-        self.relu3_4 = nn.PReLU(256)
-        self.conv3_5 = nn.Conv2d(256, 256, 3, 1, 1)
-        self.relu3_5 = nn.PReLU(256)
+        cos_m_theta = self.margin_formula(self.m)(cos_theta)
+        theta = cos_theta.data.acos()
+        k = ((self.m * theta) / math.pi).floor()
+        phi_theta = ((-1.0) ** k) * cos_m_theta - 2 * k
+        phi_theta_ = (self.cur_lambda * cos_theta + phi_theta) / (1 + self.cur_lambda)
+        norm_of_feature = torch.norm(input, 2, 1)
 
-        self.conv3_6 = nn.Conv2d(256, 256, 3, 1, 1)  # =>B*256*14*12
-        self.relu3_6 = nn.PReLU(256)
-        self.conv3_7 = nn.Conv2d(256, 256, 3, 1, 1)
-        self.relu3_7 = nn.PReLU(256)
+        one_hot = torch.zeros_like(cos_theta)
+        one_hot.scatter_(1, label.view(-1, 1), 1)
 
-        self.conv3_8 = nn.Conv2d(256, 256, 3, 1, 1)  # =>B*256*14*12
-        self.relu3_8 = nn.PReLU(256)
-        self.conv3_9 = nn.Conv2d(256, 256, 3, 1, 1)
-        self.relu3_9 = nn.PReLU(256)
+        output = one_hot * phi_theta_ + (1 - one_hot) * cos_theta
+        output *= norm_of_feature.view(-1, 1)
 
-        self.conv4_1 = nn.Conv2d(256, 512, 3, 2, 1)  # =>B*512*7*6
-        self.relu4_1 = nn.PReLU(512)
-        self.conv4_2 = nn.Conv2d(512, 512, 3, 1, 1)
-        self.relu4_2 = nn.PReLU(512)
-        self.conv4_3 = nn.Conv2d(512, 512, 3, 1, 1)
-        self.relu4_3 = nn.PReLU(512)
+        return output
 
-        self.fc5 = nn.Linear(512 * 7 * 6, 512)
-        self.fc6 = AngleLinear(512, self.classnum)
 
-    def forward(self, x):
-        x = self.relu1_1(self.conv1_1(x))
-        x = x + self.relu1_3(self.conv1_3(self.relu1_2(self.conv1_2(x))))
-
-        x = self.relu2_1(self.conv2_1(x))
-        x = x + self.relu2_3(self.conv2_3(self.relu2_2(self.conv2_2(x))))
-        x = x + self.relu2_5(self.conv2_5(self.relu2_4(self.conv2_4(x))))
-
-        x = self.relu3_1(self.conv3_1(x))
-        x = x + self.relu3_3(self.conv3_3(self.relu3_2(self.conv3_2(x))))
-        x = x + self.relu3_5(self.conv3_5(self.relu3_4(self.conv3_4(x))))
-        x = x + self.relu3_7(self.conv3_7(self.relu3_6(self.conv3_6(x))))
-        x = x + self.relu3_9(self.conv3_9(self.relu3_8(self.conv3_8(x))))
-
-        x = self.relu4_1(self.conv4_1(x))
-        x = x + self.relu4_3(self.conv4_3(self.relu4_2(self.conv4_2(x))))
-
-        x = x.view(x.size(0), -1)
-        x = self.fc5(x)
-        if self.feature: return x
-
-        x = self.fc6(x)
-        return x
+if __name__ == "__main__":
+    input = torch.randn(3, 5, requires_grad=True)
+    target = torch.randint(5, (3,), dtype=torch.int64)
+    angle_loss = AngleLoss()
+    loss = angle_loss(input, target)
+    # loss = F.cross_entropy(input, target)
+    loss.backward()
