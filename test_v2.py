@@ -400,8 +400,8 @@ if __name__ == '__main__':
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60, 100], 0.1)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
     train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
