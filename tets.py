@@ -23,7 +23,7 @@ import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
 import math
-from submit import *
+from submit import get_submit
 from tricks.tricks import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
@@ -196,7 +196,7 @@ class SiameseNetwork(nn.Module):
         x_ = self.dropout(x)
 
         x = self.ll2(x_)
-        # x = self.sigmod(x)
+        x = self.sigmod(x)
         return x, x_
 
     def __repr__(self):
@@ -367,7 +367,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCELoss()
 
     optim_params = []
 

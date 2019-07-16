@@ -8,6 +8,7 @@ import random
 import math
 from PIL import Image
 import torch.nn.functional as F
+import tensorflow as tf
 
 
 class LabelSmoothing(nn.Module):
@@ -191,23 +192,71 @@ class CenterlossFunc(Function):
         return - grad_output * diff / batch_size, None, grad_centers / batch_size, None
 
 
-def main(test_cuda=False):
-    print('-' * 80)
-    device = torch.device("cuda" if test_cuda else "cpu")
-    ct = CenterLoss(10, 2, size_average=True).to(device)
-    y = torch.Tensor([0, 0, 2, 1]).to(device)
-    feat = torch.zeros(4, 2).to(device).requires_grad_()
-    print(list(ct.parameters()))
-    print(ct.centers.grad)
-    out = ct(y, feat)
-    print(out.item())
-    out.backward()
-    print(ct.centers.grad)
-    print(feat.grad)
+class AdMSoftmaxLoss(nn.Module):
 
+    def __init__(self, in_features, out_features, s=30.0, m=0.4):
+        '''
+        AM Softmax Loss
+        '''
+        super(AdMSoftmaxLoss, self).__init__()
+        self.s = s
+        self.m = m
+        self.in_features = in_features
+        self.out_features = out_features
+        self.fc = nn.Linear(in_features, out_features, bias=False)
+
+    def forward(self, x, labels):
+        '''
+        input shape (N, in_features)
+        '''
+        assert len(x) == len(labels)
+        assert torch.min(labels) >= 0
+        assert torch.max(labels) < self.out_features
+
+        for W in self.fc.parameters():
+            W = F.normalize(W, dim=1)
+
+        x = F.normalize(x, dim=1)
+
+        wf = self.fc(x)
+        numerator = self.s * (torch.diagonal(wf.transpose(0, 1)[labels]) - self.m)
+        excl = torch.cat([torch.cat((wf[i, :y], wf[i, y + 1:])).unsqueeze(0) for i, y in enumerate(labels)], dim=0)
+        denominator = torch.exp(numerator) + torch.sum(torch.exp(self.s * excl), dim=1)
+        L = numerator - torch.log(denominator)
+        return -torch.mean(L)
+
+
+def AM_logits_compute(embeddings, label_batch, args, nrof_classes):
+    '''
+    loss head proposed in paper:<Additive Margin Softmax for Face Verification>
+    link: https://arxiv.org/abs/1801.05599
+    embeddings : normalized embedding layer of Facenet, it's normalized value of output of resface
+    label_batch : ground truth label of current training batch
+    args:         arguments from cmd line
+    nrof_classes: number of classes
+    '''
+    m = 0.35
+    s = 30
+
+    with tf.name_scope('AM_logits'):
+        kernel = tf.get_variable(name='kernel', dtype=tf.float32, shape=[args.embedding_size, nrof_classes],
+                                 initializer=tf.contrib.layers.xavier_initializer(uniform=False))
+        kernel_norm = tf.nn.l2_normalize(kernel, 0, 1e-10, name='kernel_norm')
+        cos_theta = tf.matmul(embeddings, kernel_norm)
+        cos_theta = tf.clip_by_value(cos_theta, -1, 1)  # for numerical steady
+        phi = cos_theta - m
+        label_onehot = tf.one_hot(label_batch, nrof_classes)
+        adjust_theta = s * tf.where(tf.equal(label_onehot, 1), phi, cos_theta)
+
+        return adjust_theta
 
 if __name__ == '__main__':
-    torch.manual_seed(999)
-    main(test_cuda=False)
-    if torch.cuda.is_available():
-        main(test_cuda=True)
+    criteria = AdMSoftmaxLoss(50, 2)
+    a = torch.randn(20, 50)
+    lb = torch.randint(0, 2, (20,), dtype=torch.long)
+    loss = criteria(a, lb)
+    loss.backward()
+
+    print(loss.detach().numpy())
+    print(list(criteria.parameters())[0].shape)
+    print(type(next(criteria.parameters())))
