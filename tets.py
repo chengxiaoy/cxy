@@ -23,7 +23,7 @@ import joblib
 from tensorboardX import SummaryWriter
 from datetime import datetime
 import math
-from submit import get_submit
+from submit import *
 from tricks.tricks import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
