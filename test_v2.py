@@ -259,7 +259,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         centerloss = center_loss(target_, output_)
                         loss = bce_loss + 0.05 * centerloss
                     else:
-                        loss = criterion(output, target)
+                        loss = criterion(output[1], target)
 
                     if phase == 'train':
                         loss.backward()
@@ -372,8 +372,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    # criterion = nn.CrossEntropyLoss()
-    criterion = AngleLoss()
+    criterion = nn.CrossEntropyLoss()
+    # criterion = AngleLoss()
 
     optim_params = []
 
