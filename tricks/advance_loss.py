@@ -12,9 +12,9 @@ def myphi(x, m):
            x ** 8 / math.factorial(8) - x ** 9 / math.factorial(9)
 
 
-class CusAngleLinearLoss(nn.Module):
+class CusAngleLinear(nn.Module):
     def __init__(self, in_features, out_features, m=4, phiflag=True):
-        super(CusAngleLinearLoss, self).__init__()
+        super(CusAngleLinear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.fc = nn.Linear(in_features, out_features, bias=False)
@@ -28,13 +28,6 @@ class CusAngleLinearLoss(nn.Module):
             lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
             lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x
         ]
-
-        self.iter = 0
-
-        self.LambdaMin = 5.0
-        self.LambdaMax = 1500.0
-        self.lamb = 1500.0
-        self.gamma = 0
 
     def forward(self, x, labels):
         self.iter += 1
@@ -57,9 +50,22 @@ class CusAngleLinearLoss(nn.Module):
         phi_theta = (n_one ** k) * cos_m_theta - 2 * k
         cos_theta = cos_theta * x_len
         phi_theta = phi_theta * x_len
+        return cos_theta, phi_theta
 
+
+class CusAngleLoss(nn.Module):
+    def __init__(self):
+        super(CusAngleLoss, self).__init__()
+        self.iter = 0
+
+        self.LambdaMin = 5.0
+        self.LambdaMax = 1500.0
+        self.lamb = 1500.0
+        self.gamma = 0
+
+    def forward(self, input, labels):
         target = labels.view(-1, 1)  # size=(B,1)
-
+        cos_theta, phi_theta = input
         index = cos_theta.data * 0.0  # size=(B,Classnum)
         index.scatter_(1, target.data.view(-1, 1), 1)
         index = index.byte()
@@ -85,9 +91,6 @@ class CusAngleLinearLoss(nn.Module):
         # loss = -1 * (1 - pt) ** self.gamma * logit
         # loss = loss.mean()
         return cos_theta, loss
-
-
-
 
 
 class AngleLinear(nn.Module):

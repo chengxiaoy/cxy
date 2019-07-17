@@ -25,7 +25,7 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
-from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinearLoss
+from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngleLoss
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -70,7 +70,7 @@ class SiameseNetwork(nn.Module):
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
         self.ll2 = nn.Linear(50, 2)
-        self.a_softmax = AngleLinear(50, 2)
+        self.a_softmax = CusAngleLinear(50, 2)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
@@ -95,8 +95,6 @@ class SiameseNetwork(nn.Module):
 
         self.conv_sw2 = nn.Conv2d(50, 1, 1)
         self.sw2_activation = nn.Softplus()
-
-        self.loss = CusAngleLinearLoss(50, 2)
 
     def forward_once(self, input):
         # input = self.stn(input)
@@ -255,21 +253,21 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output_, loss = model(img1, img2, vision_info)
+                    output = model(img1, img2, vision_info)
 
-                    # if center_loss:
-                    #     bce_loss = criterion(output, target)
-                    #     target_ = target.squeeze()
-                    #     centerloss = center_loss(target_, output_)
-                    #     loss = bce_loss + 0.05 * centerloss
-                    # else:
-                    #     output_, loss = criterion(output, target)
+                    if center_loss:
+                        bce_loss = criterion(output, target)
+                        target_ = target.squeeze()
+                        centerloss = center_loss(target_, output_)
+                        loss = bce_loss + 0.05 * centerloss
+                    else:
+                        loss = criterion(output, target)
 
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output_.data, 1)
+                    _, predicted = torch.max(output[0].data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -375,7 +373,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.CrossEntropyLoss()
+    criterion = CusAngleLoss()
     # criterion = CusAngleLinearLoss(50, 2).to(device)
 
     optim_params = []
