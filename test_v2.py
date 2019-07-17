@@ -258,7 +258,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         centerloss = center_loss(target_, output_)
                         loss = bce_loss + 0.05 * centerloss
                     else:
-                        output_, loss = criterion(output[1], target)
+                        output_, loss = criterion(output, target)
 
                     if phase == 'train':
                         loss.backward()
