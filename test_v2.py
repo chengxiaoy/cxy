@@ -254,15 +254,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         vision_info[0] = True
                         vision_info[1] = i * epoch
                     output = model(img1, img2, vision_info)
-
-                    if center_loss:
-                        bce_loss = criterion(output, target)
-                        target_ = target.squeeze()
-                        centerloss = center_loss(target_, output_)
-                        loss = bce_loss + 0.05 * centerloss
-                    else:
-                        loss = criterion(output, target)
-
+                    loss = criterion(output, target)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
