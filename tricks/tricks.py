@@ -214,6 +214,7 @@ class AdMSoftmaxLoss(nn.Module):
         assert torch.max(labels) < self.out_features
 
         for W in self.fc.parameters():
+            # error
             W = F.normalize(W, dim=1)
 
         x = F.normalize(x, dim=1)

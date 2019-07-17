@@ -40,9 +40,9 @@ class CusAngleLinear(nn.Module):
 
         x_norm = F.normalize(x, dim=1)
         x_len = x.norm(2, 1, True).clamp_min(eps)
-        cos_theta = self.fc(x_norm)
+        # cos_theta = self.fc(x_norm)
 
-        # cos_theta = torch.matmul(x_norm, F.normalize(self.weight))
+        cos_theta = torch.matmul(x_norm, F.normalize(self.weight))
 
         cos_m_theta = self.mlambda[self.m](cos_theta)
 
