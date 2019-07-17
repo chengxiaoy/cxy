@@ -12,6 +12,81 @@ def myphi(x, m):
            x ** 8 / math.factorial(8) - x ** 9 / math.factorial(9)
 
 
+class CusAngleLinearLoss(nn.Module):
+    def __init__(self, in_features, out_features, m=4, phiflag=True):
+        super(CusAngleLinearLoss, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.fc = nn.Linear(in_features, out_features, bias=False)
+        self.m = m
+        self.phiflag = phiflag
+        self.mlambda = [
+            lambda x: x ** 0,
+            lambda x: x ** 1,
+            lambda x: 2 * x ** 2 - 1,
+            lambda x: 4 * x ** 3 - 3 * x,
+            lambda x: 8 * x ** 4 - 8 * x ** 2 + 1,
+            lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x
+        ]
+
+        self.iter = 0
+
+        self.LambdaMin = 5.0
+        self.LambdaMax = 1500.0
+        self.lamb = 1500.0
+        self.gamma = 0
+
+    def forward(self, x, labels):
+        self.iter += 1
+        eps = 1e-12
+        assert len(x) == len(labels)
+        assert torch.min(labels) >= 0
+        assert torch.max(labels) < self.out_features
+
+        for W in self.fc.parameters():
+            W = F.normalize(W, dim=1)
+
+        x_norm = F.normalize(x, dim=1)
+        x_len = x.norm(2, 1, True).clamp_min(eps)
+        cos_theta = self.fc(x_norm)
+        cos_m_theta = self.mlambda[self.m](cos_theta)
+
+        theta = Variable(cos_theta.data.acos())
+        k = (self.m * theta / math.pi).floor()
+        n_one = k * 0.0 - 1
+        phi_theta = (n_one ** k) * cos_m_theta - 2 * k
+        cos_theta = cos_theta * x_len
+        phi_theta = phi_theta * x_len
+
+        target = labels.view(-1, 1)  # size=(B,1)
+
+        index = cos_theta.data * 0.0  # size=(B,Classnum)
+        index.scatter_(1, target.data.view(-1, 1), 1)
+        index = index.byte()
+        index = Variable(index)
+
+        self.lamb = max(self.LambdaMin, self.LambdaMax / (1 + 0.1 * self.iter))
+        output = cos_theta * 1.0  # size=(B,Classnum)
+        output[index] -= cos_theta[index] * (1.0 + 0) / (1 + self.lamb)
+        output[index] += phi_theta[index] * (1.0 + 0) / (1 + self.lamb)
+        #
+        # output[index] -= cos_theta[index] * (1.0 + 0)
+        # output[index] += phi_theta[index] * (1.0 + 0)
+
+        loss = F.cross_entropy(output, target.squeeze())
+
+        # softmax loss
+
+        # logit = F.log_softmax(output)
+        #
+        # logit = logit.gather(1, target).view(-1)
+        # pt = logit.data.exp()
+        #
+        # loss = -1 * (1 - pt) ** self.gamma * logit
+        # loss = loss.mean()
+        return cos_theta, loss
+
+
 class AngleLinear(nn.Module):
     def __init__(self, in_features, out_features, m=4, phiflag=True):
         super(AngleLinear, self).__init__()
@@ -144,9 +219,10 @@ class SphereMarginProduct(nn.Module):
 
 
 if __name__ == "__main__":
-    input = torch.randn(3, 5, requires_grad=True)
+    input = torch.randn(3, 50, requires_grad=True)
     target = torch.randint(5, (3,), dtype=torch.int64)
     angle_loss = AngleLoss()
-    loss = angle_loss(input, target)
+    angle_linear = CusAngleLinearLoss(50, 5)
+    theta = angle_linear(input, target)
     # loss = F.cross_entropy(input, target)
-    loss.backward()
+    print(theta)
