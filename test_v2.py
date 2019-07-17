@@ -96,6 +96,8 @@ class SiameseNetwork(nn.Module):
         self.conv_sw2 = nn.Conv2d(50, 1, 1)
         self.sw2_activation = nn.Softplus()
 
+        self.loss = CusAngleLinearLoss(50, 2)
+
     def forward_once(self, input):
         # input = self.stn(input)
         x = self.pretrained_model(input)
@@ -165,6 +167,7 @@ class SiameseNetwork(nn.Module):
         x = self.dropout(x)
         x = self.ll2(x)
         # x = self.sigmod(x)
+
         return x
 
     def forward_compact_bilinear(self, input1, input2):
@@ -196,6 +199,8 @@ class SiameseNetwork(nn.Module):
         x = self.lll(x)
         x = self.relu(x)
         x = self.dropout(x)
+
+        x = self.loss(x)
         return x
 
     def __repr__(self):
@@ -250,15 +255,15 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output = model(img1, img2, vision_info)
+                    output_, loss = model(img1, img2, vision_info)
 
-                    if center_loss:
-                        bce_loss = criterion(output, target)
-                        target_ = target.squeeze()
-                        centerloss = center_loss(target_, output_)
-                        loss = bce_loss + 0.05 * centerloss
-                    else:
-                        output_, loss = criterion(output, target)
+                    # if center_loss:
+                    #     bce_loss = criterion(output, target)
+                    #     target_ = target.squeeze()
+                    #     centerloss = center_loss(target_, output_)
+                    #     loss = bce_loss + 0.05 * centerloss
+                    # else:
+                    #     output_, loss = criterion(output, target)
 
                     if phase == 'train':
                         loss.backward()
@@ -389,7 +394,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam([model.parameters(), criterion.parameters()], lr=0.00001, amsgrad=True)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
