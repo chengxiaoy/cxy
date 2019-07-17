@@ -25,7 +25,7 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
-from tricks.advance_loss import AngleLinear, AngleLoss
+from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinearLoss
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -195,9 +195,8 @@ class SiameseNetwork(nn.Module):
 
         x = self.lll(x)
         x = self.relu(x)
-        x_ = self.dropout(x)
-        x = self.a_softmax(x_)
-        return x, x_
+        x = self.dropout(x)
+        return x
 
     def __repr__(self):
         return self.__class__.__name__
@@ -251,7 +250,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output, output_ = model(img1, img2, vision_info)
+                    output = model(img1, img2, vision_info)
 
                     if center_loss:
                         bce_loss = criterion(output, target)
@@ -259,14 +258,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         centerloss = center_loss(target_, output_)
                         loss = bce_loss + 0.05 * centerloss
                     else:
-                        loss = criterion(output[1], target)
+                        output_, loss = criterion(output[1], target)
 
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    output = output[0]
-                    _, predicted = torch.max(output.data, 1)
+                    _, predicted = torch.max(output_.data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -372,8 +370,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.CrossEntropyLoss()
-    # criterion = AngleLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion = CusAngleLinearLoss(50, 2)
 
     optim_params = []
 
