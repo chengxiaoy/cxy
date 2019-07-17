@@ -25,7 +25,7 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
-from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngleLoss
+from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngleLoss, Am_softmax
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
@@ -70,7 +70,7 @@ class SiameseNetwork(nn.Module):
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
         self.ll2 = nn.Linear(50, 2)
-        self.a_softmax = CusAngleLinear(50, 2)
+        self.am_softmax = Am_softmax(50, 2)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
@@ -118,9 +118,9 @@ class SiameseNetwork(nn.Module):
 
         return torch.mul(input, input_sw2)
 
-    def forward(self, input1, input2, visual_info):
+    def forward(self, input1, input2, label):
         # return self.forward_baseline(input1, input2, None)
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_compact_bilinear(input1, input2, label)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -168,7 +168,7 @@ class SiameseNetwork(nn.Module):
 
         return x
 
-    def forward_compact_bilinear(self, input1, input2):
+    def forward_compact_bilinear(self, input1, input2, label):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
@@ -198,7 +198,7 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
 
-        x = self.a_softmax(x)
+        x = self.am_softmax(x, label)
         return x
 
     def __repr__(self):
@@ -256,13 +256,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output = model(img1, img2, vision_info)
-                    loss = criterion(output, target)
+                    output = model(img1, img2, target)
+                    loss = criterion(output[0], target)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output[0].data, 1)
+                    _, predicted = torch.max(output[1].data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -368,7 +368,7 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = CusAngleLoss()
+    criterion = nn.CrossEntropyLoss()
     # criterion = CusAngleLinearLoss(50, 2).to(device)
 
     optim_params = []
@@ -387,7 +387,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.1, amsgrad=False)
+    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=False)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
