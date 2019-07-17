@@ -68,7 +68,8 @@ class CusAngleLoss(nn.Module):
         self.gamma = 0
 
     def forward(self, input, labels):
-        self.iter += 1
+        if self.training:
+            self.iter += 1
 
         target = labels.view(-1, 1)  # size=(B,1)
         cos_theta, phi_theta = input
