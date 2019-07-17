@@ -387,7 +387,7 @@ if __name__ == '__main__':
     #     if not frozen:
     #         optim_params.append(params)
 
-    optimizer = Adam(model.parameters(), lr=0.01, amsgrad=True)
+    optimizer = Adam(model.parameters(), lr=0.000001, amsgrad=True)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
