@@ -19,7 +19,7 @@ class CusAngleLinear(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.fc = nn.Linear(in_features, out_features, bias=False)
-        self.weight = Parameter(torch.Tensor(in_features, out_features))
+        self.weight = Parameter(torch.Tensor(out_features, in_features))
         nn.init.xavier_uniform_(self.weight)
         self.m = m
         self.phiflag = phiflag
