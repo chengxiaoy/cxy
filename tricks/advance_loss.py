@@ -19,6 +19,8 @@ class CusAngleLinear(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.fc = nn.Linear(in_features, out_features, bias=False)
+        self.weight = Parameter(torch.Tensor(in_features, out_features))
+        nn.init.xavier_uniform_(self.weight)
         self.m = m
         self.phiflag = phiflag
         self.mlambda = [
@@ -39,6 +41,9 @@ class CusAngleLinear(nn.Module):
         x_norm = F.normalize(x, dim=1)
         x_len = x.norm(2, 1, True).clamp_min(eps)
         cos_theta = self.fc(x_norm)
+
+        # cos_theta = torch.matmul(x_norm, F.normalize(self.weight))
+
         cos_m_theta = self.mlambda[self.m](cos_theta)
 
         theta = Variable(cos_theta.data.acos())
