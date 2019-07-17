@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.nn import Parameter
 import math
+from torch.nn.utils import weight_norm
 
 
 def myphi(x, m):
@@ -29,15 +30,11 @@ class CusAngleLinear(nn.Module):
             lambda x: 16 * x ** 5 - 20 * x ** 3 + 5 * x
         ]
 
-    def forward(self, x, labels):
-        self.iter += 1
+    def forward(self, x):
         eps = 1e-12
-        assert len(x) == len(labels)
-        assert torch.min(labels) >= 0
-        assert torch.max(labels) < self.out_features
 
-        for W in self.fc.parameters():
-            W = F.normalize(W, dim=1)
+        with torch.no_grad():
+            self.fc.weight.div_(torch.norm(self.fc.weight, dim=1, keepdim=True))
 
         x_norm = F.normalize(x, dim=1)
         x_len = x.norm(2, 1, True).clamp_min(eps)
@@ -64,6 +61,8 @@ class CusAngleLoss(nn.Module):
         self.gamma = 0
 
     def forward(self, input, labels):
+        self.iter += 1
+
         target = labels.view(-1, 1)  # size=(B,1)
         cos_theta, phi_theta = input
         index = cos_theta.data * 0.0  # size=(B,Classnum)
@@ -228,7 +227,10 @@ if __name__ == "__main__":
     input = torch.randn(3, 50, requires_grad=True)
     target = torch.randint(5, (3,), dtype=torch.int64)
     angle_loss = AngleLoss()
-    angle_linear = CusAngleLinearLoss(50, 5)
-    theta = angle_linear(input, target)
+    angle_linear = CusAngleLinear(50, 5)
+    theta = angle_linear(input)
     # loss = F.cross_entropy(input, target)
     print(theta)
+    # m = weight_norm(nn.Linear(20, 40, bias=False), dim=1, name='weight')
+    # for w in m.parameters():
+    #     print(torch.matmul(w, w.permute(1, 0)))
