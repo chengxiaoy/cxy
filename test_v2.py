@@ -198,7 +198,7 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout(x)
 
-        x = self.loss(x)
+        x = self.a_softmax(x)
         return x
 
     def __repr__(self):
