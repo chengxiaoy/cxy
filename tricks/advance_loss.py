@@ -89,7 +89,7 @@ class CusAngleLoss(nn.Module):
         #
         # loss = -1 * (1 - pt) ** self.gamma * logit
         # loss = loss.mean()
-        return cos_theta, loss
+        return loss
 
 
 class AngleLinear(nn.Module):
