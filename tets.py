@@ -161,9 +161,9 @@ class SiameseNetwork(nn.Module):
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.ll3(x)
-        x = self.sigmod(x)
-        return x
+        x_ = self.ll3(x)
+        x = self.sigmod(x_)
+        return x, x_
 
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
