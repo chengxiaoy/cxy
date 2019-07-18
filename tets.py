@@ -179,8 +179,8 @@ class SiameseNetwork(nn.Module):
         # output1 = self.selayer(output1)
         # output2 = self.selayer(output2)
 
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
+        # output1 = self.forward_spatial_weight(output1)
+        # output2 = self.forward_spatial_weight(output2)
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
 
