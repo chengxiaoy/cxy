@@ -36,6 +36,17 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Config():
     train_batch_size = 16
     val_batch_size = 16
+    # concate or bilinear
+    use_bilinear = False
+
+    # conv trick
+    use_spatial_attention = False
+    use_se = False
+    use_stack = False
+    use_model_ensemble = False
+
+    use_random_erasing = False
+    replacement_sampling = False
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -87,7 +98,7 @@ class SiameseNetwork(nn.Module):
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
-        self.conv_sw1 = nn.Conv2d(2048, 50, 1)
+        self.conv_sw1 = nn.Conv2d(512, 50, 1)
         self.sw1_bn = nn.BatchNorm2d(50)
         self.sw1_activation = nn.ReLU()
 
