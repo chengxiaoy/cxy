@@ -203,10 +203,10 @@ class FaceDataSet(Dataset):
             #                 return img1, img2, torch.Tensor([0])
             while True:
                 p1, p4 = sample(self.label_images_map.keys(), 2)
-                if 'fd' in p1 or 'fs' in p1 or 'md' in p1 or 'ms' in p1:
-                    continue
-                if 'fd' in p4 or 'fs' in p4 or 'md' in p4 or 'ms' in p4:
-                    continue
+                # if 'fd' in p1 or 'fs' in p1 or 'md' in p1 or 'ms' in p1:
+                #     continue
+                # if 'fd' in p4 or 'fs' in p4 or 'md' in p4 or 'ms' in p4:
+                #     continue
                 if p1 != p4 and (p1, p4) not in self.relations and (p4, p1) not in self.relations:
                     img1 = loader(choice(self.label_images_map[p1]), self.kind, self.argument)
                     img2 = loader(choice(self.label_images_map[p4]), self.kind, self.argument)

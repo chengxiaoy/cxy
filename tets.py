@@ -122,8 +122,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, None)
-        # return self.forward_compact_bilinear(input1, input2)
+        # return self.forward_baseline(input1, input2, None)
+        return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -181,8 +181,8 @@ class SiameseNetwork(nn.Module):
         output1 = self.relu(output1)
         output2 = self.relu(output2)
 
-        output1 = self.selayer(output1)
-        output2 = self.selayer(output2)
+        # output1 = self.selayer(output1)
+        # output2 = self.selayer(output2)
 
         output1 = self.forward_spatial_weight(output1)
         output2 = self.forward_spatial_weight(output2)
