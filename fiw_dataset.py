@@ -102,6 +102,8 @@ def get_data_kfold(k=5):
 
 def get_data():
     train_file_path = "Faces_in_the_Wild/train_relationships.csv"
+    train_file_path_ext = 'KinFaceW-II/kfacew_2.csv'
+
     train_folders_path = "Faces_in_the_Wild/train/"
     val_famillies = "F09"
 
@@ -132,7 +134,26 @@ def get_data():
     train = [x for x in relationships if val_famillies not in x[0]]
     val = [x for x in relationships if val_famillies in x[0]]
 
+    relationships_ext = pd.read_csv(train_file_path_ext)
+    relationships_ext = list(zip(relationships_ext.p1.values, relationships_ext.p2.values))
+
+    relationships.extend(relationships_ext)
+    for p1, p2 in relationships_ext:
+        train_person_to_images_map[p1] = get_kinfacew_path(p1)
+        train_person_to_images_map[p2] = get_kinfacew_path(p2)
+
     return train, train_person_to_images_map, val, val_person_to_images_map
+
+
+def get_kinfacew_path(p):
+    if p.startswith("fd"):
+        return ["KinFaceW-II/images/father-dau/" + p]
+    elif p.startswith('fs'):
+        return ["KinFaceW-II/images/father-son/" + p]
+    elif p.startswith('md'):
+        return ['KinFaceW-II/images/mother-dau/' + p]
+    elif p.startswith('ms'):
+        return ['KinFaceW-II/images/mother-son/' + p]
 
 
 class FaceDataSet(Dataset):

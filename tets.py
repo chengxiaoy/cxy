@@ -64,8 +64,8 @@ class SiameseNetwork(nn.Module):
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
         # frozen the params
-        for param in self.pretrained_model.parameters():
-            param.requires_grad = False
+        # for param in self.pretrained_model.parameters():
+        #     param.requires_grad = False
 
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
@@ -122,8 +122,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        # return self.forward_baseline(input1, input2, None)
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_baseline(input1, input2, None)
+        # return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
