@@ -31,7 +31,7 @@ def get_submit():
         X2 = [x.split("-")[1] for x in batch]
         X2 = [loader(test_path + x, 'extract', False) for x in X2]
 
-        res = model(default_collate(X1).to(device), default_collate(X2).to(device), [False, 0])
+        res,_ = model(default_collate(X1).to(device), default_collate(X2).to(device), [False, 0])
         res = res.data.cpu().numpy()
         res = np.squeeze(res)
         # pred = res > 0.5
