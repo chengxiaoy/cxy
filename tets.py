@@ -80,7 +80,7 @@ class SiameseNetwork(nn.Module):
 
         # self.stn = STNLayer()
 
-        # self.selayer = SELayer(512)
+        self.selayer = SELayer(512)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
