@@ -63,6 +63,11 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
 
+        # frozen the params
+        for param in self.pretrained_model.parameters():
+            param.requires_grad = False
+
+
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
