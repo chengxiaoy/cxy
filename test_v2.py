@@ -196,10 +196,10 @@ class SiameseNetwork(nn.Module):
 
         x = self.lll(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        x_ = self.dropout(x)
 
-        x = self.am_softmax(x, label)
-        return x
+        x = self.ll2(x_)
+        return x, x_
 
     def __repr__(self):
         return self.__class__.__name__
@@ -258,11 +258,14 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         vision_info[1] = i * epoch
                     output = model(img1, img2, target)
                     loss = criterion(output[0], target)
+                    if center_loss is not None:
+                        centerloss = center_loss(target, output[1])
+                        loss = loss + 0.05 * centerloss
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output[1].data, 1)
+                    _, predicted = torch.max(output[0].data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -399,6 +402,7 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
+    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,
+                center_loss=CenterLoss(2, 50).to(device))
+    # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
     get_submit()
