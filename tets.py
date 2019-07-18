@@ -133,8 +133,8 @@ class SiameseNetwork(nn.Module):
         #     writer.add_image('Image', x, visual_info[1])
 
         output2 = self.forward_once(input2)
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
+        # output1 = self.forward_spatial_weight(output1)
+        # output2 = self.forward_spatial_weight(output2)
         globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 

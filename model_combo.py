@@ -70,46 +70,64 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, include_top=False):
+    def __init__(self, config):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+        self.config = config
 
-        # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
-        self.ll1 = nn.Linear(4096, 100)
-        self.relu = nn.ReLU()
-        self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.3)
-        self.ll2 = nn.Linear(50, 1)
+        self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2')
+        if self.config.use_bilinear:
+            self.bi_conv = nn.Conv2d(2048, 512, 1)
+            self.bi_bn = nn.BatchNorm2d(512)
+            self.bi_rule = nn.ReLU(0.1)
+            self.bilinear = nn.Bilinear(512, 512, 1024)
+            if self.config.use_spatial_attention:
+                self.conv_sw1 = nn.Conv2d(512, 50, 1)
+                self.sw1_bn = nn.BatchNorm2d(50)
+                self.sw1_activation = nn.ReLU()
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
-        self.lll = nn.Linear(1024, 50)
-        self.ll = nn.Linear(1024, 100)
+                self.conv_sw2 = nn.Conv2d(50, 1, 1)
+                self.sw2_activation = nn.Softplus()
+            if self.config.use_se:
+                self.selayer = SELayer(512)
+            self.ll1 = nn.Linear(1024, 50)
+            self.relu = nn.ReLU()
+            self.sigmod = nn.Sigmoid()
+            self.dropout = nn.Dropout(0.3)
+            self.ll2 = nn.Linear(50, 1)
+            self.globalavg = nn.AdaptiveAvgPool2d(1)
+            self.globalmax = nn.AdaptiveMaxPool2d(1)
 
-        self.ll3 = nn.Linear(100, 1)
+        else:
+            if self.config.use_spatial_attention:
+                self.conv_sw1 = nn.Conv2d(2048, 50, 1)
+                self.sw1_bn = nn.BatchNorm2d(50)
+                self.sw1_activation = nn.ReLU()
 
-        self.conv = nn.Conv2d(2048, 512, 1)
+                self.conv_sw2 = nn.Conv2d(50, 1, 1)
+                self.sw2_activation = nn.Softplus()
+            if self.config.use_se:
+                self.selayer = SELayer(2048)
+            self.ll1 = nn.Linear(4096, 100)
+            self.relu = nn.ReLU()
+            self.sigmod = nn.Sigmoid()
+            self.dropout = nn.Dropout(0.3)
+            self.ll2 = nn.Linear(100, 1)
+            self.globalavg = nn.AdaptiveAvgPool2d(1)
+            self.globalmax = nn.AdaptiveMaxPool2d(1)
 
-        # self.stn = STNLayer()
-
-        # self.selayer = SELayer(512)
-        self.globalavg = nn.AdaptiveAvgPool2d(1)
-        self.globalmax = nn.AdaptiveMaxPool2d(1)
-
-        self.dropout2 = nn.Dropout(0.3)
-        self.bn1 = nn.BatchNorm2d(512)
-
-        self.conv_sw1 = nn.Conv2d(512, 50, 1)
-        self.sw1_bn = nn.BatchNorm2d(50)
-        self.sw1_activation = nn.ReLU()
-
-        self.conv_sw2 = nn.Conv2d(50, 1, 1)
-        self.sw2_activation = nn.Softplus()
-
-    def forward_once(self, input):
+    def forward_once(self, x):
         # input = self.stn(input)
-        x = self.pretrained_model(input)
-        # x_1 = self.pretrained_model2(input)
-        # x = torch.cat([x, x_1], 1)
+        x = self.pretrained_model(x)
+        if self.config.use_bilinear:
+            x = self.bi_conv(x)
+            x = self.bi_bn(x)
+            x = self.bi_rule(x)
+        if self.config.use_se:
+            x = self.selayer(x)
+
+        if self.config.use_spatial_attention:
+            x = self.forward_spatial_weight(x)
+
         return x
 
     def forward_spatial_weight(self, input):
@@ -128,10 +146,12 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, None)
-        # return self.forward_compact_bilinear(input1, input2)
+        if self.config.use_bilinear:
+            return self.forward_compact_bilinear(input1, input2)
+        else:
+            return self.forward_baseline(input1, input2)
 
-    def forward_baseline(self, input1, input2, visual_info):
+    def forward_baseline(self, input1, input2):
         """
         baseline op for compare two input
         :param input1:
@@ -139,32 +159,17 @@ class SiameseNetwork(nn.Module):
         :return:
         """
         output1 = self.forward_once(input1)
-        # if visual_info[0]:
-        #     x = vutils.make_grid(output1[:, :3, :, :], normalize=True, scale_each=True)
-        #     writer.add_image('Image', x, visual_info[1])
-
         output2 = self.forward_once(input2)
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
-        globalmax = nn.AdaptiveMaxPool2d(1)
-        globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = globalavg(output1)
-        output2 = globalavg(output2)
-
-        # output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
-        # output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
+        output1 = self.globalavg(output1)
+        output2 = self.globalavg(output2)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
 
-        # x = mul1.view(mul1.size(0),-1)
-
         # (x1**2-x2**2)
         mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
-        # x1*x2
-        # mul2 = torch.mul(output1, output2)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
@@ -172,7 +177,7 @@ class SiameseNetwork(nn.Module):
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x_ = self.ll3(x)
+        x_ = self.ll2(x)
         x = self.sigmod(x_)
         return x, x_
 
@@ -180,18 +185,6 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        output1 = self.conv(output1)
-        output2 = self.conv(output2)
-        output1 = self.bn1(output1)
-        output2 = self.bn1(output2)
-        output1 = self.relu(output1)
-        output2 = self.relu(output2)
-
-        # output1 = self.selayer(output1)
-        # output2 = self.selayer(output2)
-
-        # output1 = self.forward_spatial_weight(output1)
-        # output2 = self.forward_spatial_weight(output2)
         output1 = self.globalavg(output1)
         output2 = self.globalavg(output2)
 
