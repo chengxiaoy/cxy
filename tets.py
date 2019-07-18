@@ -117,8 +117,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        # return self.forward_baseline(input1, input2, None)
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_baseline(input1, input2, None)
+        # return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
