@@ -68,17 +68,17 @@ class SiameseNetwork(nn.Module):
         #     param.requires_grad = False
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
-        self.ll1 = nn.Linear(4096, 100)
+        self.ll1 = nn.Linear(4096, 512)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
-        self.ll2 = nn.Linear(50, 1)
+        self.ll2 = nn.Linear(512, 100)
+
+        self.ll3 = nn.Linear(100, 1)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
         self.ll = nn.Linear(1024, 100)
-
-        self.ll3 = nn.Linear(100, 1)
 
         self.conv = nn.Conv2d(2048, 1024, 1)
 
@@ -125,8 +125,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_stack(input1, input2)
-        # return self.forward_baseline(input1, input2, None)
+        # return self.forward_stack(input1, input2)
+        return self.forward_baseline(input1, input2, None)
         # return self.forward_compact_bilinear(input1, input2)
 
     def forward_stack(self, input1, input2):
@@ -184,6 +184,9 @@ class SiameseNetwork(nn.Module):
         x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x = self.ll2(x)
         x = self.relu(x)
         x = self.dropout(x)
         x_ = self.ll3(x)
