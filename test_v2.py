@@ -120,10 +120,10 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, label):
-        return self.forward_baseline(input1, input2, None)
+        return self.forward_baseline(input1, input2, label)
         # return self.forward_compact_bilinear(input1, input2, label)
 
-    def forward_baseline(self, input1, input2, visual_info):
+    def forward_baseline(self, input1, input2, label):
         """
         baseline op for compare two input
         :param input1:
@@ -164,7 +164,7 @@ class SiameseNetwork(nn.Module):
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.am_softmax(x)
+        x = self.am_softmax(x,label)
         # x = self.sigmod(x)
 
         return x
