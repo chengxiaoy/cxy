@@ -49,7 +49,7 @@ class Config():
     use_random_erasing = False
     replacement_sampling = False
 
-    use_resnet = False
+    use_resnet = True
 
     name = 'default'
 
@@ -437,8 +437,8 @@ def run(config):
 
 if __name__ == '__main__':
     config1 = Config()
-    config1.use_resnet = True
-    config1.name = "use_resnet"
+    config1.use_resnet = False
+    config1.name = "use_senet"
 
     config2 = Config()
     config2.use_random_erasing = True
