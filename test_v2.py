@@ -31,7 +31,7 @@ from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngle
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -258,7 +258,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         vision_info[0] = True
                         vision_info[1] = i * epoch
                     output = model(img1, img2, target)
-                    loss = criterion(output, target)
+                    loss = criterion(output[0], target)
                     if center_loss is not None:
                         centerloss = center_loss(target, output[1])
                         loss = loss + 0.05 * centerloss
