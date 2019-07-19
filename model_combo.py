@@ -44,9 +44,14 @@ class Config():
     use_se = False
     use_stack = False
     use_model_ensemble = False
+    use_drop_out = False
 
     use_random_erasing = False
     replacement_sampling = False
+
+    use_resnet = False
+
+    name = 'default'
 
 
 def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
@@ -74,7 +79,11 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
         self.config = config
 
-        self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2')
+        if self.config.use_resnet:
+            self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2', model_name='resnet50')
+        else:
+            self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2', model_name='senet50')
+
         if self.config.use_bilinear:
             self.bi_conv = nn.Conv2d(2048, 512, 1)
             self.bi_bn = nn.BatchNorm2d(512)
@@ -145,7 +154,7 @@ class SiameseNetwork(nn.Module):
 
         return torch.mul(input, input_sw2)
 
-    def forward(self, input1, input2, visual_info):
+    def forward(self, input1, input2):
         if self.config.use_bilinear:
             return self.forward_compact_bilinear(input1, input2)
         else:
@@ -176,7 +185,8 @@ class SiameseNetwork(nn.Module):
 
         x = self.ll1(x)
         x = self.relu(x)
-        x = self.dropout(x)
+        if self.config.use_drop_out:
+            x = self.dropout(x)
         x_ = self.ll2(x)
         x = self.sigmod(x_)
         return x, x_
@@ -195,9 +205,10 @@ class SiameseNetwork(nn.Module):
         x = self.relu(x)
         x = self.dropout2(x)
 
-        x = self.lll(x)
+        x = self.ll1(x)
         x = self.relu(x)
-        x_ = self.dropout(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout(x)
 
         x = self.ll2(x_)
         x = self.sigmod(x)
@@ -323,46 +334,58 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
 
 class CusRandomSampler(Sampler):
 
-    def __init__(self, batch_size, iter_num, relation_sizes):
+    def __init__(self, batch_size, iter_num, relation_sizes, replacement=False):
         super(CusRandomSampler, self).__init__(data_source=None)
         self.batch_size = batch_size
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
+        self.replacement = replacement
 
     def __iter__(self):
-        even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-        random.shuffle(even_list)
-        even_list = even_list * 6
-        res = []
-        for i in range(self.iter_num):
-            same_size = self.batch_size // 2
-            res.extend(even_list[i * same_size:(i + 1) * same_size])
-            res.extend([1] * (self.batch_size - same_size))
-
-        return iter(res)
+        if not self.replacement:
+            even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+            random.shuffle(even_list)
+            even_list = even_list * 6
+            res = []
+            for i in range(self.iter_num):
+                same_size = self.batch_size // 2
+                res.extend(even_list[i * same_size:(i + 1) * same_size])
+                res.extend([1] * (self.batch_size - same_size))
+            return iter(res)
+        else:
+            even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+            res = []
+            for i in range(self.iter_num):
+                same_size = self.batch_size // 2
+                res.extend(sample(even_list, same_size))
+                res.extend([1] * (self.batch_size - same_size))
+            return iter(res)
 
     def __len__(self):
         return self.batch_size * self.iter_num
 
 
-if __name__ == '__main__':
+def run(config):
     train, train_map, val, val_map = get_data()
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
+                'val': FaceDataSet(val, val_map, 'val', config.use_random_erasing)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
-                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
+                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train),
+                                                           config.replacement_sampling)
                                   )
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
-                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val)),
+                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val),
+                                                         config.replacement_sampling),
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    model = SiameseNetwork(False).to(device)
+    model = SiameseNetwork(config=config).to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
@@ -399,9 +422,41 @@ if __name__ == '__main__':
     # exp_decay = math.exp(-0.01)
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60, 100], 0.1)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
-    get_submit()
+    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=50)
+    del model
+    get_submit(config.name)
+
+
+if __name__ == '__main__':
+    config1 = Config()
+
+    config2 = Config()
+    config2.use_random_erasing = True
+    config2.name = "use_random_erasing"
+
+    config3 = Config()
+    config3.use_se = True
+    config3.name = 'use_se'
+
+    config4 = Config()
+    config4.replacement_sampling = True
+    config4.name = 'replacement_sampling'
+
+    config5 = Config()
+    config5.use_drop_out = True
+    config4.name = 'use_drop_out'
+
+    configs = [config1, config2, config3, config4, config5]
+
+    for config in configs:
+        # img = loader('face.jpg', 'train', config.use_random_erasing)
+        # img = img.unsqueeze(dim=0)
+        # model = SiameseNetwork(config=config).to(device)
+        # print(len(model(img, img)))
+        run(config)
+
+        # del model
