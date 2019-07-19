@@ -266,7 +266,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output.data, 1)
+                    _, predicted = torch.max(output[0].data, 1)
 
                     running_loss = running_loss + loss.item()
 
