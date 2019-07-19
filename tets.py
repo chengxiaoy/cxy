@@ -68,7 +68,7 @@ class SiameseNetwork(nn.Module):
         #     param.requires_grad = False
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
-        self.ll1 = nn.Linear(2048, 100)
+        self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
@@ -103,8 +103,8 @@ class SiameseNetwork(nn.Module):
         x = self.pretrained_model(input)
 
         # x = self.selayer(x)
-        x = self.forward_spatial_weight(x)
-        x = self.conv(x)
+        # x = self.forward_spatial_weight(x)
+        # x = self.conv(x)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
         return x
