@@ -71,15 +71,15 @@ class SiameseNetwork(nn.Module):
         self.dropout = nn.Dropout(0.3)
         self.ll2 = nn.Linear(100, 2)
         self.am_softmax = Am_softmax(100, 2)
-        self.a_softmax = AngleLinear(100, 2)
+        # self.a_softmax = AngleLinear(100, 2)
 
-        self.bilinear = nn.Bilinear(512, 512, 1024)
-        self.lll = nn.Linear(1024, 50)
-        self.ll = nn.Linear(1024, 100)
-
-        self.ll3 = nn.Linear(100, 1)
-
-        self.conv = nn.Conv2d(2048, 512, 1)
+        # self.bilinear = nn.Bilinear(512, 512, 1024)
+        # self.lll = nn.Linear(1024, 50)
+        # self.ll = nn.Linear(1024, 100)
+        #
+        # self.ll3 = nn.Linear(100, 1)
+        #
+        # self.conv = nn.Conv2d(2048, 512, 1)
 
         # self.stn = STNLayer()
 
@@ -87,16 +87,16 @@ class SiameseNetwork(nn.Module):
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
-        self.dropout2 = nn.Dropout(0.3)
-        self.bn1 = nn.BatchNorm2d(512)
-
-        self.conv_sw1 = nn.Conv2d(512, 50, 1)
-        self.sw1_bn = nn.BatchNorm2d(50)
-        self.sw1_activation = nn.ReLU()
-
-        self.conv_sw2 = nn.Conv2d(50, 1, 1)
-        self.sw2_activation = nn.Softplus()
-
+        # self.dropout2 = nn.Dropout(0.3)
+        # self.bn1 = nn.BatchNorm2d(512)
+        #
+        # self.conv_sw1 = nn.Conv2d(512, 50, 1)
+        # self.sw1_bn = nn.BatchNorm2d(50)
+        # self.sw1_activation = nn.ReLU()
+        #
+        # self.conv_sw2 = nn.Conv2d(50, 1, 1)
+        # self.sw2_activation = nn.Softplus()
+    #
     def forward_once(self, input):
         # input = self.stn(input)
         x = self.pretrained_model(input)
@@ -164,7 +164,7 @@ class SiameseNetwork(nn.Module):
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.a_softmax(x)
+        x = self.am_softmax(x)
         # x = self.sigmod(x)
 
         return x
@@ -266,7 +266,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output[0].data, 1)
+                    _, predicted = torch.max(output[1].data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -374,8 +374,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    # criterion = nn.CrossEntropyLoss()
-    criterion = AngleLoss()
+    criterion = nn.CrossEntropyLoss()
+    # criterion = AngleLoss()
     # criterion = CusAngleLinearLoss(50, 2).to(device)
 
     optim_params = []
