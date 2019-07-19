@@ -30,7 +30,7 @@ from tricks.tricks import *
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -68,7 +68,7 @@ class SiameseNetwork(nn.Module):
         #     param.requires_grad = False
 
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
-        self.ll1 = nn.Linear(4096, 512)
+        self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
@@ -80,7 +80,9 @@ class SiameseNetwork(nn.Module):
         self.lll = nn.Linear(1024, 50)
         self.ll = nn.Linear(1024, 100)
 
-        self.conv = nn.Conv2d(2048, 1024, 1)
+        self.reduce_conv1 = nn.Conv2d(4096, 4096, 3)
+        self.reduce_conv2 = nn.Conv2d(4096, 4096, 3)
+        self.reduce_conv3 = nn.Conv2d(4096, 4096, 3)
 
         # self.stn = STNLayer()
 
@@ -125,8 +127,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        # return self.forward_stack(input1, input2)
-        return self.forward_baseline(input1, input2, None)
+        return self.forward_stack(input1, input2)
+        # return self.forward_baseline(input1, input2, None)
         # return self.forward_compact_bilinear(input1, input2)
 
     def forward_stack(self, input1, input2):
@@ -134,6 +136,9 @@ class SiameseNetwork(nn.Module):
         output2 = self.forward_once(input2)
 
         output = torch.cat([output1, output2], dim=1)
+        output = self.reduce_conv1(output)
+        output = self.reduce_conv2(output)
+        output = self.reduce_conv3(output)
 
         output = self.globalavg(output)
         output = output.view(output.size(0), -1)
