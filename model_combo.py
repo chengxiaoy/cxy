@@ -428,14 +428,16 @@ def run(config):
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
     train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=50)
     del model
-    get_submit(config)
+    try:
+        get_submit(config)
+    except Exception as e:
+        print(e)
 
 
 if __name__ == '__main__':
     config1 = Config()
     config1.use_resnet = True
     config1.name = "use_resnet"
-
 
     config2 = Config()
     config2.use_random_erasing = True
