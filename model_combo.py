@@ -264,7 +264,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output, output_ = model(img1, img2, vision_info)
+                    output, output_ = model(img1, img2)
 
                     if center_loss:
                         bce_loss = criterion(output, target)
