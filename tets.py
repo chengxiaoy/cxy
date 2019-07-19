@@ -103,7 +103,7 @@ class SiameseNetwork(nn.Module):
         x = self.pretrained_model(input)
 
         x = self.selayer(x)
-        x = self.forward_spatial_weight(x)
+        # x = self.forward_spatial_weight(x)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
         return x
