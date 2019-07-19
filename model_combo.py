@@ -28,7 +28,7 @@ from tricks.tricks import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
-writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -366,6 +366,7 @@ class CusRandomSampler(Sampler):
 
 
 def run(config):
+    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
     train, train_map, val, val_map = get_data()
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
@@ -427,11 +428,11 @@ def run(config):
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
     train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=50)
-    del model
     try:
-        get_submit(config)
+        get_submit(model,config)
     except Exception as e:
         print(e)
+    del model
 
 
 if __name__ == '__main__':

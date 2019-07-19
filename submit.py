@@ -5,7 +5,7 @@ import torch
 from torch.utils.data.dataloader import default_collate
 
 
-def get_submit(config):
+def get_submit(model, config):
     test_path = "Faces_in_the_Wild/test/"
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -18,9 +18,7 @@ def get_submit(config):
     submission = pd.read_csv('Faces_in_the_Wild/sample_submission.csv')
 
     predictions = []
-    model = SiameseNetwork(config).to(device).eval()
-
-    model.load_state_dict(torch.load('SiameseNetwork.pth'))
+    # model.load_state_dict(torch.load('SiameseNetwork.pth'))
 
     model.eval()
 
@@ -41,7 +39,3 @@ def get_submit(config):
     submission['is_related'] = predictions
 
     submission.to_csv("vgg_face" + config.name + ".csv", index=False)
-
-
-if __name__ == '__main__':
-    get_submit()
