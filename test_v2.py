@@ -332,12 +332,14 @@ class CusRandomSampler(Sampler):
 
     def __iter__(self):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-        random.shuffle(even_list)
-        even_list = even_list * 6
+        # random.shuffle(even_list)
+        # even_list = even_list * 6
         res = []
         for i in range(self.iter_num):
             same_size = self.batch_size // 2
-            res.extend(even_list[i * same_size:(i + 1) * same_size])
+
+            res.extend(sample(even_list, same_size))
+            # res.extend(even_list[i * same_size:(i + 1) * same_size])
             res.extend([1] * (self.batch_size - same_size))
 
         return iter(res)
