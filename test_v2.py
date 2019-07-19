@@ -69,8 +69,9 @@ class SiameseNetwork(nn.Module):
         self.relu = nn.ReLU()
         self.sigmod = nn.Sigmoid()
         self.dropout = nn.Dropout(0.3)
-        self.ll2 = nn.Linear(50, 2)
-        self.am_softmax = Am_softmax(50, 2)
+        self.ll2 = nn.Linear(100, 2)
+        self.am_softmax = Am_softmax(100, 2)
+        self.a_softmax = AngleLinear(100, 2)
 
         self.bilinear = nn.Bilinear(512, 512, 1024)
         self.lll = nn.Linear(1024, 50)
@@ -119,8 +120,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, label):
-        # return self.forward_baseline(input1, input2, None)
-        return self.forward_compact_bilinear(input1, input2, label)
+        return self.forward_baseline(input1, input2, None)
+        # return self.forward_compact_bilinear(input1, input2, label)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -135,9 +136,9 @@ class SiameseNetwork(nn.Module):
         #     writer.add_image('Image', x, visual_info[1])
 
         output2 = self.forward_once(input2)
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
-        globalmax = nn.AdaptiveMaxPool2d(1)
+        # output1 = self.forward_spatial_weight(output1)
+        # output2 = self.forward_spatial_weight(output2)
+        # globalmax = nn.AdaptiveMaxPool2d(1)
         globalavg = nn.AdaptiveAvgPool2d(1)
 
         output1 = globalavg(output1)
@@ -163,7 +164,7 @@ class SiameseNetwork(nn.Module):
         x = self.ll1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.ll2(x)
+        x = self.a_softmax(x)
         # x = self.sigmod(x)
 
         return x
@@ -257,7 +258,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         vision_info[0] = True
                         vision_info[1] = i * epoch
                     output = model(img1, img2, target)
-                    loss = criterion(output[0], target)
+                    loss = criterion(output, target)
                     if center_loss is not None:
                         centerloss = center_loss(target, output[1])
                         loss = loss + 0.05 * centerloss
@@ -265,7 +266,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                         loss.backward()
                         optimizer.step()
 
-                    _, predicted = torch.max(output[0].data, 1)
+                    _, predicted = torch.max(output.data, 1)
 
                     running_loss = running_loss + loss.item()
 
@@ -371,7 +372,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion = AngleLoss()
     # criterion = CusAngleLinearLoss(50, 2).to(device)
 
     optim_params = []
@@ -402,7 +404,6 @@ if __name__ == '__main__':
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,
-                center_loss=CenterLoss(2, 50).to(device))
-    # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
+    # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
+    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
     get_submit()
