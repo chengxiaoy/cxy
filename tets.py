@@ -435,4 +435,4 @@ if __name__ == '__main__':
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
     train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
-    get_submit()
+    # get_submit()
