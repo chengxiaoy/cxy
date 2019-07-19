@@ -31,7 +31,7 @@ from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngle
 
 writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
@@ -39,7 +39,7 @@ class Config():
     val_batch_size = 16
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
+def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='senet50'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
         resnet50_weight_file = 'weights/resnet50_ft_weight.pkl'
