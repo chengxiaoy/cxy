@@ -84,23 +84,26 @@ class SiameseNetwork(nn.Module):
 
         # self.stn = STNLayer()
 
-        self.selayer = SELayer(512)
+        self.selayer = SELayer(2048)
         self.globalavg = nn.AdaptiveAvgPool2d(1)
         self.globalmax = nn.AdaptiveMaxPool2d(1)
 
         self.dropout2 = nn.Dropout(0.3)
         self.bn1 = nn.BatchNorm2d(512)
 
-        self.conv_sw1 = nn.Conv2d(512, 50, 1)
-        self.sw1_bn = nn.BatchNorm2d(50)
+        self.conv_sw1 = nn.Conv2d(2048, 100, 1)
+        self.sw1_bn = nn.BatchNorm2d(100)
         self.sw1_activation = nn.ReLU()
 
-        self.conv_sw2 = nn.Conv2d(50, 1, 1)
+        self.conv_sw2 = nn.Conv2d(100, 1, 1)
         self.sw2_activation = nn.Softplus()
 
     def forward_once(self, input):
         # input = self.stn(input)
         x = self.pretrained_model(input)
+
+        x = self.selayer(x)
+        x = self.forward_spatial_weight(x)
         # x_1 = self.pretrained_model2(input)
         # x = torch.cat([x, x_1], 1)
         return x
@@ -121,12 +124,25 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        return self.forward_baseline(input1, input2, None)
+        return self.forward_stack(input1,input2)
+        # return self.forward_baseline(input1, input2, None)
         # return self.forward_compact_bilinear(input1, input2)
 
     def forward_stack(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
+
+        output = torch.cat([output1, output2], dim=1)
+
+        output = self.globalavg(output)
+        output = output.view(output.size(0), -1)
+
+        x = self.ll1(output)
+        x = self.relu(x)
+        x = self.dropout(x)
+        x_ = self.ll3(x)
+        x = self.sigmod(x_)
+        return x, x_
 
     def forward_baseline(self, input1, input2, visual_info):
         """
