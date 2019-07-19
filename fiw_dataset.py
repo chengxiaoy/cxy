@@ -100,7 +100,7 @@ def get_data_kfold(k=5):
         yield train, train_person_to_images_map, val, val_person_to_images_map
 
 
-def get_data():
+def get_data(extension=False):
     train_file_path = "Faces_in_the_Wild/train_relationships.csv"
     train_file_path_ext = 'KinFaceW-II/kfacew_2.csv'
 
@@ -133,14 +133,23 @@ def get_data():
 
     train = [x for x in relationships if val_famillies not in x[0]]
     val = [x for x in relationships if val_famillies in x[0]]
-    #
-    relationships_ext = pd.read_csv(train_file_path_ext)
-    relationships_ext = list(zip(relationships_ext.p1.values, relationships_ext.p2.values))
 
-    train.extend(relationships_ext)
-    for p1, p2 in relationships_ext:
-        train_person_to_images_map[p1] = get_kinfacew_path(p1)
-        train_person_to_images_map[p2] = get_kinfacew_path(p2)
+    if extension:
+        # relationships_ext = pd.read_csv(train_file_path_ext)
+        # relationships_ext = list(zip(relationships_ext.p1.values, relationships_ext.p2.values))
+        #
+        # train.extend(relationships_ext)
+        # for p1, p2 in relationships_ext:
+        #     train_person_to_images_map[p1] = get_kinfacew_path(p1)
+        #     train_person_to_images_map[p2] = get_kinfacew_path(p2)
+
+        vgg_face = pd.read_csv('vgg_face.csv')
+        pairs = vgg_face['img_pair'][vgg_face['is_related'] > 0.9].to_numpy()
+        for pair in pairs:
+            pp1, pp2 = pair.split('-')
+            train.append((pp1, pp2))
+            train_person_to_images_map[pp1] = ['Faces_in_the_Wild/test/' + pp1]
+            train_person_to_images_map[pp2] = ['Faces_in_the_Wild/test/' + pp2]
 
     return train, train_person_to_images_map, val, val_person_to_images_map
 
@@ -163,20 +172,19 @@ class FaceDataSet(Dataset):
         self.kind = kind
         self.length = self.get_length()
         self.argument = argument
-        self.same = True
         # self.family_label_map, self.label_map = self.get_family_label_map()
 
-    # def get_family_label_map(self):
-    #     family_label_map = defaultdict(list)
-    #     for x in self.label_images_map:
-    #         family = x.split("/")[0]
-    #         family_label_map[family].append(x)
-    #
-    #     label_map = defaultdict(list)
-    #     for relation in self.relations:
-    #         label_map[relation[0]].append(relation[1])
-    #
-    #     return family_label_map, label_map
+    def get_family_label_map(self):
+        family_label_map = defaultdict(list)
+        for x in self.label_images_map:
+            family = x.split("/")[0]
+            family_label_map[family].append(x)
+
+        label_map = defaultdict(list)
+        for relation in self.relations:
+            label_map[relation[0]].append(relation[1])
+
+        return family_label_map, label_map
 
     def __getitem__(self, index):
 

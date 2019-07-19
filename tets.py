@@ -122,8 +122,8 @@ class SiameseNetwork(nn.Module):
         return torch.mul(input, input_sw2)
 
     def forward(self, input1, input2, visual_info):
-        # return self.forward_baseline(input1, input2, None)
-        return self.forward_compact_bilinear(input1, input2)
+        return self.forward_baseline(input1, input2, None)
+        # return self.forward_compact_bilinear(input1, input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -347,7 +347,7 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    train, train_map, val, val_map = get_data()
+    train, train_map, val, val_map = get_data(True)
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
 
