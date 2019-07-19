@@ -67,7 +67,6 @@ class SiameseNetwork(nn.Module):
         # for param in self.pretrained_model.parameters():
         #     param.requires_grad = False
 
-
         # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
         self.ll1 = nn.Linear(4096, 100)
         self.relu = nn.ReLU()
@@ -124,6 +123,10 @@ class SiameseNetwork(nn.Module):
     def forward(self, input1, input2, visual_info):
         return self.forward_baseline(input1, input2, None)
         # return self.forward_compact_bilinear(input1, input2)
+
+    def forward_stack(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
 
     def forward_baseline(self, input1, input2, visual_info):
         """
@@ -332,12 +335,14 @@ class CusRandomSampler(Sampler):
 
     def __iter__(self):
         even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-        random.shuffle(even_list)
-        even_list = even_list * 6
+        # random.shuffle(even_list)
+        # even_list = even_list * 6
         res = []
         for i in range(self.iter_num):
             same_size = self.batch_size // 2
-            res.extend(even_list[i * same_size:(i + 1) * same_size])
+            res.extend(sample(even_list, same_size))
+
+            # res.extend(even_list[i * same_size:(i + 1) * same_size])
             res.extend([1] * (self.batch_size - same_size))
 
         return iter(res)
@@ -347,7 +352,7 @@ class CusRandomSampler(Sampler):
 
 
 if __name__ == '__main__':
-    train, train_map, val, val_map = get_data(True)
+    train, train_map, val, val_map = get_data(False)
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
 
