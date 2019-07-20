@@ -100,7 +100,7 @@ def get_data_kfold(k=5):
         yield train, train_person_to_images_map, val, val_person_to_images_map
 
 
-def get_data(extension=False):
+def get_data(extension=False,kinfacew = False):
     train_file_path = "Faces_in_the_Wild/train_relationships.csv"
     train_file_path_ext = 'KinFaceW-II/kfacew_2.csv'
 
@@ -135,14 +135,6 @@ def get_data(extension=False):
     val = [x for x in relationships if val_famillies in x[0]]
 
     if extension:
-        # relationships_ext = pd.read_csv(train_file_path_ext)
-        # relationships_ext = list(zip(relationships_ext.p1.values, relationships_ext.p2.values))
-        #
-        # train.extend(relationships_ext)
-        # for p1, p2 in relationships_ext:
-        #     train_person_to_images_map[p1] = get_kinfacew_path(p1)
-        #     train_person_to_images_map[p2] = get_kinfacew_path(p2)
-
         vgg_face = pd.read_csv('vgg_face.csv')
         pairs = vgg_face['img_pair'][vgg_face['is_related'] > 0.9].to_numpy()
         for pair in pairs:
@@ -150,6 +142,14 @@ def get_data(extension=False):
             train.append((pp1, pp2))
             train_person_to_images_map[pp1] = ['Faces_in_the_Wild/test/' + pp1]
             train_person_to_images_map[pp2] = ['Faces_in_the_Wild/test/' + pp2]
+    if kinfacew:
+        relationships_ext = pd.read_csv(train_file_path_ext)
+        relationships_ext = list(zip(relationships_ext.p1.values, relationships_ext.p2.values))
+
+        train.extend(relationships_ext)
+        for p1, p2 in relationships_ext:
+            train_person_to_images_map[p1] = get_kinfacew_path(p1)
+            train_person_to_images_map[p2] = get_kinfacew_path(p2)
 
     return train, train_person_to_images_map, val, val_person_to_images_map
 

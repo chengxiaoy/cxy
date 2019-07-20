@@ -44,12 +44,16 @@ class Config():
     use_se = False
     use_stack = False
     use_model_ensemble = False
-    use_drop_out = False
+    use_drop_out = True
+    drop_out_rate = 0.3
 
-    use_random_erasing = False
+    use_random_erasing = True
     replacement_sampling = False
 
     use_resnet = True
+
+    use_data_extension = False
+    use_kinfacew = False
 
     pooling_method = 'avg'
 
@@ -103,8 +107,8 @@ class SiameseNetwork(nn.Module):
             self.ll1 = nn.Linear(1024, 50)
             self.relu = nn.ReLU()
             self.sigmod = nn.Sigmoid()
-            self.dropout1 = nn.Dropout(0.3)
-            self.dropout2 = nn.Dropout(0.3)
+            self.dropout1 = nn.Dropout(self.config.drop_out_rate)
+            self.dropout2 = nn.Dropout(self.config.drop_out_rate)
             self.ll2 = nn.Linear(50, 1)
 
         else:
@@ -120,7 +124,7 @@ class SiameseNetwork(nn.Module):
             self.ll1 = nn.Linear(4096, 100)
             self.relu = nn.ReLU()
             self.sigmod = nn.Sigmoid()
-            self.dropout = nn.Dropout(0.3)
+            self.dropout = nn.Dropout(self.config.drop_out_rate)
             self.ll2 = nn.Linear(100, 1)
 
         if self.config.pooling_method == 'avg':
@@ -401,7 +405,7 @@ class CusRandomSampler(Sampler):
 
 def run(config):
     writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S') + config.name))
-    train, train_map, val, val_map = get_data()
+    train, train_map, val, val_map = get_data(config.use_data_extension, config.use_kinfacew)
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
                 'val': FaceDataSet(val, val_map, 'val', config.use_random_erasing)}
@@ -472,41 +476,21 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.use_resnet = True
-    config1.use_drop_out = True
-    config1.use_random_erasing = True
-    config1.use_se = True
-    config1.name = "base_line_dp_re_se"
+    config1.name = "base_line"
 
     config2 = Config()
-    config2.use_bilinear = True
-    config1.use_drop_out = True
-    config1.use_random_erasing = True
-    config1.use_se = True
-    config2.name = "bilinear_dp_re_se"
+    config2.use_data_extension = True
+    config2.name = "base_line_de"
 
     config3 = Config()
-    config3.pooling_method = 'rmac'
-    config1.use_drop_out = True
-    config1.use_random_erasing = True
-    config1.use_se = True
-    config3.name = 'rmac_dp_re_se'
+    config3.use_kinfacew = True
+    config3.name = 'base_line_kf'
 
     config4 = Config()
-    config4.pooling_method = 'gem'
-    config1.use_drop_out = True
-    config1.use_random_erasing = True
-    config1.use_se = True
-    config4.name = 'gem_dp_re_se'
+    config4.drop_out_rate = 0.5
+    config4.name = 'base_line_dp0_5'
 
-    config5 = Config()
-    config5.use_stack = True
-    config1.use_drop_out = True
-    config1.use_random_erasing = True
-    config1.use_se = True
-    config5.name = 'stack_dp_re_se'
-
-    configs = [config1, config2, config3, config4, config5]
+    configs = [config2, config3, config4, config1]
 
     for config in configs:
         img = loader('face.jpg', 'train', config.use_random_erasing)
