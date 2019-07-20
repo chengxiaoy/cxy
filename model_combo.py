@@ -25,9 +25,9 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
+from tricks.advance_pool import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
-
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -50,6 +50,8 @@ class Config():
     replacement_sampling = False
 
     use_resnet = True
+
+    pooling_method = 'avg'
 
     name = 'default'
 
@@ -103,8 +105,6 @@ class SiameseNetwork(nn.Module):
             self.sigmod = nn.Sigmoid()
             self.dropout = nn.Dropout(0.3)
             self.ll2 = nn.Linear(50, 1)
-            self.globalavg = nn.AdaptiveAvgPool2d(1)
-            self.globalmax = nn.AdaptiveMaxPool2d(1)
 
         else:
             if self.config.use_spatial_attention:
@@ -121,8 +121,20 @@ class SiameseNetwork(nn.Module):
             self.sigmod = nn.Sigmoid()
             self.dropout = nn.Dropout(0.3)
             self.ll2 = nn.Linear(100, 1)
-            self.globalavg = nn.AdaptiveAvgPool2d(1)
-            self.globalmax = nn.AdaptiveMaxPool2d(1)
+
+        if self.config.pooling_method == 'avg':
+            self.pool = nn.AdaptiveAvgPool2d(1)
+        elif self.config.pooling_method == 'max':
+            self.pool = nn.AdaptiveMaxPool2d(1)
+        elif self.config.pooling_method == 'rmac':
+            self.pool = rmac
+        elif self.config.pooling_method == 'gem':
+            self.pool = gem
+
+        if self.config.use_stack:
+            self.reduce_conv1 = nn.Conv2d(4096, 4096, 3)
+            self.reduce_conv2 = nn.Conv2d(4096, 4096, 3)
+            self.reduce_conv3 = nn.Conv2d(4096, 4096, 3)
 
     def forward_once(self, x):
         # input = self.stn(input)
@@ -170,8 +182,8 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        output1 = self.globalavg(output1)
-        output2 = self.globalavg(output2)
+        output1 = self.pool(output1)
+        output2 = self.pool(output2)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
@@ -184,19 +196,19 @@ class SiameseNetwork(nn.Module):
         x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
-        x = self.relu(x)
+        x_ = self.relu(x)
         if self.config.use_drop_out:
-            x = self.dropout(x)
-        x_ = self.ll2(x)
-        x = self.sigmod(x_)
+            x_ = self.dropout(x_)
+        x = self.ll2(x_)
+        x = self.sigmod(x)
         return x, x_
 
     def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        output1 = self.globalavg(output1)
-        output2 = self.globalavg(output2)
+        output1 = self.pool(output1)
+        output2 = self.pool(output2)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
@@ -206,10 +218,30 @@ class SiameseNetwork(nn.Module):
         x = self.dropout2(x)
 
         x = self.ll1(x)
-        x = self.relu(x)
+        x_ = self.relu(x)
         if self.config.use_drop_out:
-            x_ = self.dropout(x)
+            x_ = self.dropout(x_)
 
+        x = self.ll2(x_)
+        x = self.sigmod(x)
+        return x, x_
+
+    def forward_use_stack(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+
+        output = torch.cat([output1, output2], dim=1)
+        output = self.reduce_conv1(output)
+        output = self.reduce_conv2(output)
+        output = self.reduce_conv3(output)
+
+        output = self.pool(output)
+        output = output.view(output.size(0), -1)
+
+        x = self.ll1(output)
+        x_ = self.relu(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout(x_)
         x = self.ll2(x_)
         x = self.sigmod(x)
         return x, x_
@@ -218,7 +250,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders,writer, num_epochs=200,center_loss=None):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num_epochs=200, center_loss=None):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -366,7 +398,7 @@ class CusRandomSampler(Sampler):
 
 
 def run(config):
-    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')+config.name))
+    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S') + config.name))
     train, train_map, val, val_map = get_data()
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
@@ -427,9 +459,9 @@ def run(config):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders,writer, num_epochs=100)
+    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=100)
     try:
-        get_submit(model,config)
+        get_submit(model, config)
     except Exception as e:
         print(e)
     del model
@@ -437,32 +469,33 @@ def run(config):
 
 if __name__ == '__main__':
     config1 = Config()
-    config1.use_resnet = False
-    config1.name = "use_senet"
+    config1.use_resnet = True
+    config1.name = "base_line"
 
     config2 = Config()
-    config2.use_random_erasing = True
-    config2.name = "use_random_erasing"
+    config2.use_bilinear = True
+    config2.name = "bilinear"
 
     config3 = Config()
-    config3.use_se = True
-    config3.name = 'use_se'
+    config3.pooling_method = 'rmac'
+    config3.name = 'rmac'
 
     config4 = Config()
-    config4.replacement_sampling = True
-    config4.name = 'replacement_sampling'
+    config4.pooling_method = 'gem'
+    config4.name = 'gem'
 
     config5 = Config()
-    config5.use_drop_out = True
-    config4.name = 'use_drop_out'
+    config5.use_stack = True
+    config4.name = 'stack'
 
     configs = [config1, config2, config3, config4, config5]
 
     for config in configs:
-        # img = loader('face.jpg', 'train', config.use_random_erasing)
-        # img = img.unsqueeze(dim=0)
-        # model = SiameseNetwork(config=config).to(device)
-        # print(len(model(img, img)))
-        run(config)
+        img = loader('face.jpg', 'train', config.use_random_erasing)
+        img = img.unsqueeze(dim=0)
+        model = SiameseNetwork(config=config).to(device)
+        print(len(model(img, img)))
+        del model
+        # run(config)
 
         # del model
