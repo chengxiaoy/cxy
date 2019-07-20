@@ -492,7 +492,7 @@ if __name__ == '__main__':
 
     for config in configs:
         img = loader('face.jpg', 'train', config.use_random_erasing)
-        img = img.unsqueeze(dim=0)
+        img = img.unsqueeze(dim=0).to(device)
         model = SiameseNetwork(config=config).to(device)
         print(len(model(img, img)))
         del model
