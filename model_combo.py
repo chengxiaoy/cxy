@@ -218,7 +218,7 @@ class SiameseNetwork(nn.Module):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=200, center_loss=None):
+def train_model(model, criterion, optimizer, scheduler, dataloaders,writer, num_epochs=200,center_loss=None):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -366,7 +366,7 @@ class CusRandomSampler(Sampler):
 
 
 def run(config):
-    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
+    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')+config.name))
     train, train_map, val, val_map = get_data()
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
@@ -427,7 +427,7 @@ def run(config):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=100)
+    train_model(model, criterion, optimizer, scheduler, data_loaders,writer, num_epochs=100)
     try:
         get_submit(model,config)
     except Exception as e:
