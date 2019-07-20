@@ -470,9 +470,13 @@ def run(config):
 
 
 if __name__ == '__main__':
+
+
     config1 = Config()
     config1.use_resnet = True
-    config1.name = "base_line"
+    config1.use_drop_out = True
+    config1.use_random_erasing = True
+    config1.name = "base_line_dp_re"
 
     config2 = Config()
     config2.use_bilinear = True
@@ -488,7 +492,7 @@ if __name__ == '__main__':
 
     config5 = Config()
     config5.use_stack = True
-    config4.name = 'stack'
+    config5.name = 'stack'
 
     configs = [config1, config2, config3, config4, config5]
 
@@ -500,4 +504,3 @@ if __name__ == '__main__':
         # del model
         run(config)
         #
-        del model
