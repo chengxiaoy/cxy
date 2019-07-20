@@ -493,11 +493,11 @@ if __name__ == '__main__':
     configs = [config1, config2, config3, config4, config5]
 
     for config in configs:
-        img = loader('face.jpg', 'train', config.use_random_erasing)
-        img = img.unsqueeze(dim=0).to(device)
-        model = SiameseNetwork(config=config).to(device)
-        print(len(model(img, img)))
-        del model
-        # run(config)
-
+        # img = loader('face.jpg', 'train', config.use_random_erasing)
+        # img = img.unsqueeze(dim=0).to(device)
+        # model = SiameseNetwork(config=config).to(device)
+        # print(len(model(img, img)))
         # del model
+        run(config)
+        #
+        del model
