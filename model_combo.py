@@ -52,7 +52,7 @@ class Config():
 
     use_resnet = True
 
-    use_data_extension = False
+    use_data_extension = True
     use_kinfacew = False
 
     pooling_method = 'avg'
@@ -61,6 +61,7 @@ class Config():
     adam_amsgrad = True
 
     lr_scheduler = 'default'
+    weight_decay = 0.0
 
     name = 'default'
 
@@ -458,7 +459,7 @@ def run(config):
     #         optim_params.append(params)
     optimizer = None
     if config.optimizer == 'adam':
-        optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=config.adam_amsgrad)
+        optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=config.adam_amsgrad, weight_decay=config.weight_decay)
     elif config.optimizer == 'rmsprop':
         optimizer = RMSprop(model.parameters(), lr=0.0001)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
@@ -490,20 +491,20 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.adam_amsgrad = False
-    config1.name = "base_line_ams"
+    config1.weight_decay = 0.001
+    config1.name = "base_line_wd_e-3"
 
     config2 = Config()
-    config2.optimizer = 'rmsprop'
-    config2.name = "base_line_rms"
+    config2.weight_decay = 0.01
+    config2.name = "base_line_wd_e-2"
 
     config3 = Config()
-    config3.lr_scheduler = 'cosineAnneal'
-    config3.name = 'base_line_anneal'
+    config3.weight_decay = 0.1
+    config3.name = 'base_line_wd_e-1'
 
     config4 = Config()
-    config4.lr_scheduler = 'exp'
-    config4.name = 'base_line_exp'
+    config3.weight_decay = 1
+    config4.name = 'base_line_wd_e0'
 
     configs = [config1, config2, config3, config4]
 
