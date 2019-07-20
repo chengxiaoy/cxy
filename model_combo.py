@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 import time
 import copy
-from torch.optim import Adam
+from torch.optim import Adam, RMSprop
 from fiw_dataset import *
 from torch.utils.data import RandomSampler, Sampler
 
@@ -56,6 +56,11 @@ class Config():
     use_kinfacew = False
 
     pooling_method = 'avg'
+
+    optimizer = 'adam'
+    adam_amsgrad = True
+
+    lr_scheduler = 'default'
 
     name = 'default'
 
@@ -451,18 +456,27 @@ def run(config):
     #             frozen = True
     #     if not frozen:
     #         optim_params.append(params)
-
-    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=True)
+    optimizer = None
+    if config.optimizer == 'adam':
+        optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=config.adam_amsgrad)
+    elif config.optimizer == 'rmsprop':
+        optimizer = RMSprop(model.parameters(), lr=0.0001)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
     # optimizer = Adam(optim_params, lr=0.00001)
 
-    # exp_decay = math.exp(-0.01)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = None
+    if config.lr_scheduler == 'default':
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1,
+                                                               verbose=True)
+    elif config.lr_scheduler == 'cosineAnneal':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
+    elif config.lr_scheduler == 'exp':
+        exp_decay = math.exp(-0.01)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
     train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=100)
@@ -476,21 +490,22 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.name = "base_line"
+    config1.adam_amsgrad = False
+    config1.name = "base_line_ams"
 
     config2 = Config()
-    config2.use_data_extension = True
-    config2.name = "base_line_de"
+    config2.optimizer = 'rmsprop'
+    config2.name = "base_line_rms"
 
     config3 = Config()
-    config3.use_kinfacew = True
-    config3.name = 'base_line_kf'
+    config3.lr_scheduler = 'cosineAnneal'
+    config3.name = 'base_line_anneal'
 
     config4 = Config()
-    config4.drop_out_rate = 0.5
-    config4.name = 'base_line_dp0_5'
+    config4.lr_scheduler = 'exp'
+    config4.name = 'base_line_exp'
 
-    configs = [config2, config3, config4, config1]
+    configs = [config1, config2, config3, config4]
 
     for config in configs:
         img = loader('face.jpg', 'train', config.use_random_erasing)
