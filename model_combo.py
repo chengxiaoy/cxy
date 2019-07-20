@@ -215,7 +215,8 @@ class SiameseNetwork(nn.Module):
 
         x = self.bilinear(output1, output2)
         x = self.relu(x)
-        x = self.dropout2(x)
+        if self.config.use_drop_out:
+            x = self.dropout(x)
 
         x = self.ll1(x)
         x_ = self.relu(x)
