@@ -127,12 +127,12 @@ class SiameseNetwork(nn.Module):
                 self.sw2_activation = nn.Softplus()
             if self.config.use_se:
                 self.selayer = SELayer(2048)
-            self.ll1 = nn.Linear(4096, 512)
-            self.ll3 = nn.Linear(512, 64)
+            self.ll1 = nn.Linear(4096, 100)
+            # self.ll3 = nn.Linear(512, 64)
             self.relu = nn.ReLU()
             self.sigmod = nn.Sigmoid()
             self.dropout = nn.Dropout(self.config.drop_out_rate)
-            self.ll2 = nn.Linear(64, 1)
+            self.ll2 = nn.Linear(100, 1)
 
         if self.config.pooling_method == 'avg':
             self.pool = nn.AdaptiveAvgPool2d(1)
