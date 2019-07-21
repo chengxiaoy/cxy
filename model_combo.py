@@ -127,7 +127,7 @@ class SiameseNetwork(nn.Module):
                 self.sw2_activation = nn.Softplus()
             if self.config.use_se:
                 self.selayer = SELayer(2048)
-            self.ll1 = nn.Linear(4096, 100)
+            self.ll1 = nn.Linear(8192, 100)
             self.relu = nn.ReLU()
             self.sigmod = nn.Sigmoid()
             self.dropout = nn.Dropout(self.config.drop_out_rate)
