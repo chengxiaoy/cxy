@@ -489,7 +489,7 @@ def run(config):
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=200)
+    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=300)
     try:
         get_submit(model, config)
     except Exception as e:
@@ -500,7 +500,8 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.name = 'best'
+    config1.use_kinfacew = True
+    config1.name = 'best_KF'
 
     config2 = Config()
 
