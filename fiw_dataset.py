@@ -105,7 +105,7 @@ def get_data(extension=False,kinfacew = False):
     train_file_path_ext = 'KinFaceW-II/kfacew_2.csv'
 
     train_folders_path = "Faces_in_the_Wild/train/"
-    val_famillies = "F09"
+    val_famillies = "F08"
 
     all_images = glob(train_folders_path + "*/*/*.jpg")
     all_images = [x.replace('\\', '/') for x in all_images]

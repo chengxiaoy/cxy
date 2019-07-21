@@ -219,10 +219,6 @@ class SiameseNetwork(nn.Module):
         x_ = self.relu(x)
         if self.config.use_drop_out:
             x_ = self.dropout(x_)
-        x = self.ll3(x_)
-        x_ = self.relu(x)
-        if self.config.use_drop_out:
-            x_ = self.dropout(x_)
         x = self.ll2(x_)
         x = self.sigmod(x)
         return x, x_
