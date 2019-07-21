@@ -193,15 +193,21 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
+        max1 = nn.AdaptiveMaxPool2d(output1)
+        max2 = nn.AdaptiveMaxPool2d(output2)
+
         output1 = self.pool(output1)
         output2 = self.pool(output2)
 
-        # (x1-x2)**2
-        sub = torch.sub(output1, output2)
-        mul1 = torch.mul(sub, sub)
+        # # (x1-x2)**2
+        # sub = torch.sub(output1, output2)
+        # mul1 = torch.mul(sub, sub)
+        #
+        # # (x1**2-x2**2)
+        # mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
 
-        # (x1**2-x2**2)
-        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        mul1 = torch.cat([max1, output1], 1)
+        mul2 = torch.cat([max2, output2], 1)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
