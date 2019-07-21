@@ -127,11 +127,12 @@ class SiameseNetwork(nn.Module):
                 self.sw2_activation = nn.Softplus()
             if self.config.use_se:
                 self.selayer = SELayer(2048)
-            self.ll1 = nn.Linear(8192, 100)
+            self.ll1 = nn.Linear(4096, 512)
+            self.ll3 = nn.Linear(512, 64)
             self.relu = nn.ReLU()
             self.sigmod = nn.Sigmoid()
             self.dropout = nn.Dropout(self.config.drop_out_rate)
-            self.ll2 = nn.Linear(100, 1)
+            self.ll2 = nn.Linear(64, 1)
 
         if self.config.pooling_method == 'avg':
             self.pool = nn.AdaptiveAvgPool2d(1)
@@ -195,26 +196,30 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        max1 = self.maxpool(output1)
-        max2 = self.maxpool(output2)
+        # max1 = self.maxpool(output1)
+        # max2 = self.maxpool(output2)
 
         output1 = self.pool(output1)
         output2 = self.pool(output2)
 
-        # # (x1-x2)**2
-        # sub = torch.sub(output1, output2)
-        # mul1 = torch.mul(sub, sub)
-        #
-        # # (x1**2-x2**2)
-        # mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+        # (x1-x2)**2
+        sub = torch.sub(output1, output2)
+        mul1 = torch.mul(sub, sub)
 
-        mul1 = torch.cat([max1, output1], 1)
-        mul2 = torch.cat([max2, output2], 1)
+        # (x1**2-x2**2)
+        mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
+
+        # mul1 = torch.cat([max1, output1], 1)
+        # mul2 = torch.cat([max2, output2], 1)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
+        x_ = self.relu(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout(x_)
+        x = self.ll3(x_)
         x_ = self.relu(x)
         if self.config.use_drop_out:
             x_ = self.dropout(x_)
