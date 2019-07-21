@@ -459,7 +459,7 @@ def run(config):
     #         optim_params.append(params)
     optimizer = None
     if config.optimizer == 'adam':
-        optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=config.adam_amsgrad, weight_decay=config.weight_decay)
+        optimizer = Adam(model.parameters(), lr=0.00003, amsgrad=config.adam_amsgrad, weight_decay=config.weight_decay)
     elif config.optimizer == 'rmsprop':
         optimizer = RMSprop(model.parameters(), lr=0.0001)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
@@ -471,7 +471,7 @@ def run(config):
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
     scheduler = None
     if config.lr_scheduler == 'default':
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1,
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=5, factor=0.2,
                                                                verbose=True)
     elif config.lr_scheduler == 'cosineAnneal':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
