@@ -142,6 +142,8 @@ class SiameseNetwork(nn.Module):
         elif self.config.pooling_method == 'gem':
             self.pool = gem
 
+        self.maxpool = nn.AdaptiveMaxPool2d(1)
+
         if self.config.use_stack:
             self.reduce_conv1 = nn.Conv2d(4096, 4096, 3)
             self.reduce_conv2 = nn.Conv2d(4096, 4096, 3)
@@ -193,8 +195,8 @@ class SiameseNetwork(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        max1 = nn.AdaptiveMaxPool2d(output1)
-        max2 = nn.AdaptiveMaxPool2d(output2)
+        max1 = self.maxpool(output1)
+        max2 = self.maxpool(output2)
 
         output1 = self.pool(output1)
         output2 = self.pool(output2)
