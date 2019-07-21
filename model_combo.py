@@ -480,7 +480,7 @@ def run(config):
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=100)
+    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=200)
     try:
         get_submit(model, config)
     except Exception as e:
@@ -491,22 +491,15 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.weight_decay = 0.001
-    config1.name = "base_line_wd_e-3"
+    config1.name = 'best'
 
     config2 = Config()
-    config2.weight_decay = 0.01
-    config2.name = "base_line_wd_e-2"
 
     config3 = Config()
-    config3.weight_decay = 0.1
-    config3.name = 'base_line_wd_e-1'
 
     config4 = Config()
-    config3.weight_decay = 1
-    config4.name = 'base_line_wd_e0'
 
-    configs = [config1, config2, config3, config4]
+    configs = [config1]
 
     for config in configs:
         img = loader('face.jpg', 'train', config.use_random_erasing)
