@@ -48,7 +48,7 @@ class Config():
     drop_out_rate = 0.3
 
     use_random_erasing = True
-    replacement_sampling = False
+    replacement_sampling = True
 
     use_resnet = True
 
@@ -395,7 +395,7 @@ class CusRandomSampler(Sampler):
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
         self.replacement = replacement
-        self.use_srs = True
+        self.use_srs = False
 
     def __iter__(self):
         if not self.replacement:
