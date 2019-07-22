@@ -521,21 +521,12 @@ def run(config):
 
 if __name__ == '__main__':
 
-    config1 = Config()
-    config1.weight_decay = 0.0001
-    config1.name = 'best_decay'
-
-    config2 = Config()
-    config2.use_data_extension = True
-    config2.name = 'best_de'
-
-    config3 = Config()
-    config3.pooling_method = 'gem'
-    config3.name = 'gem'
-
-    config4 = Config()
-
-    configs = [config1, config2, config3, config4]
+    configs = []
+    for i in range(10):
+        val_families = 'F0' + str(i)
+        config = Config()
+        config.val_families = val_families
+        configs.append(config)
 
     max_accs = []
     for config in configs:
