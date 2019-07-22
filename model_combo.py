@@ -508,7 +508,7 @@ if __name__ == '__main__':
         config = Config()
         config.val_families = val_families
         config.name = val_families
-        configs.append(configs)
+        configs.append(config)
 
     max_accs = []
     for config in configs:
