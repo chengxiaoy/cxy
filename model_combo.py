@@ -530,8 +530,8 @@ if __name__ == '__main__':
     config2.name = 'best_de'
 
     config3 = Config()
-    config3.use_resnet = False
-    config3.name = 'senet'
+    config3.pooling_method = 'gem'
+    config3.name = 'gem'
 
     config4 = Config()
 
