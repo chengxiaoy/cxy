@@ -150,7 +150,7 @@ from torch.autograd.function import Function
 
 
 class CenterLoss(nn.Module):
-    def __init__(self, num_classes, feat_dim, size_average=True):
+    def __init__(self, feat_dim, num_classes, size_average=True):
         super(CenterLoss, self).__init__()
         self.centers = nn.Parameter(torch.randn(num_classes, feat_dim))
         self.centerlossfunc = CenterlossFunc.apply
@@ -250,6 +250,7 @@ def AM_logits_compute(embeddings, label_batch, args, nrof_classes):
         adjust_theta = s * tf.where(tf.equal(label_onehot, 1), phi, cos_theta)
 
         return adjust_theta
+
 
 if __name__ == '__main__':
     criteria = AdMSoftmaxLoss(50, 2)
