@@ -48,7 +48,7 @@ class Config():
     drop_out_rate = 0.3
 
     use_random_erasing = True
-    replacement_sampling = False
+    replacement_sampling = True
 
     use_resnet = True
 
@@ -395,6 +395,7 @@ class CusRandomSampler(Sampler):
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
         self.replacement = replacement
+        self.use_srs = True
 
     def __iter__(self):
         if not self.replacement:
@@ -408,13 +409,31 @@ class CusRandomSampler(Sampler):
                 res.extend([1] * (self.batch_size - same_size))
             return iter(res)
         else:
-            even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-            res = []
-            for i in range(self.iter_num):
-                same_size = self.batch_size // 2
-                res.extend(sample(even_list, same_size))
-                res.extend([1] * (self.batch_size - same_size))
-            return iter(res)
+
+            if self.use_srs:
+                even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                queue = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                res = []
+                for i in range(self.iter_num):
+                    same_size = self.batch_size // 2
+                    sm = sample(even_list, same_size)
+                    res.extend(sm)
+                    for ele in sm:
+                        even_list.remove(ele)
+                    even_list.extend(queue[i * same_size:(i + 1) * same_size])
+
+                    res.extend([1] * (self.batch_size - same_size))
+                return iter(res)
+
+
+            else:
+                even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                res = []
+                for i in range(self.iter_num):
+                    same_size = self.batch_size // 2
+                    res.extend(sample(even_list, same_size))
+                    res.extend([1] * (self.batch_size - same_size))
+                return iter(res)
 
     def __len__(self):
         return self.batch_size * self.iter_num
@@ -520,6 +539,5 @@ if __name__ == '__main__':
     for config in configs:
         max_accs.append(run(config))
 
-
     print(max_accs)
-        #
+    #
