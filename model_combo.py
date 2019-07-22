@@ -531,7 +531,7 @@ if __name__ == '__main__':
 
     config3 = Config()
     config3.use_resnet = False
-    config3 = 'senet'
+    config3.name = 'senet'
 
     config4 = Config()
 
