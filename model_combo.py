@@ -52,7 +52,7 @@ class Config():
 
     use_resnet = True
 
-    use_data_extension = True
+    use_data_extension = False
     use_kinfacew = False
 
     pooling_method = 'avg'
@@ -62,6 +62,8 @@ class Config():
 
     lr_scheduler = 'default'
     weight_decay = 0.0
+
+    val_families = 'F09'
 
     name = 'default'
 
@@ -382,7 +384,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
     # save model
     torch.save(model.state_dict(), str(model) + ".pth")
 
-    return model
+    return max_acc
 
 
 class CusRandomSampler(Sampler):
@@ -420,7 +422,7 @@ class CusRandomSampler(Sampler):
 
 def run(config):
     writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S') + config.name))
-    train, train_map, val, val_map = get_data(config.use_data_extension, config.use_kinfacew)
+    train, train_map, val, val_map = get_data(config.val_families, config.use_data_extension, config.use_kinfacew)
 
     datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
                 'val': FaceDataSet(val, val_map, 'val', config.use_random_erasing)}
@@ -489,28 +491,26 @@ def run(config):
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=300)
+    max_acc = train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=100)
     try:
         get_submit(model, config)
     except Exception as e:
         print(e)
     del model
+    return max_acc
 
 
 if __name__ == '__main__':
 
-    config1 = Config()
-    config1.use_kinfacew = True
-    config1.name = 'best_KF'
+    configs = []
+    for i in range(10):
+        val_families = 'F0' + str(i)
+        config = Config()
+        config.val_families = val_families
+        config.name = val_families
+        configs.append(configs)
 
-    config2 = Config()
-
-    config3 = Config()
-
-    config4 = Config()
-
-    configs = [config1]
-
+    max_accs = []
     for config in configs:
         img = loader('face.jpg', 'train', config.use_random_erasing)
         img = img.unsqueeze(dim=0).to(device)
@@ -518,5 +518,8 @@ if __name__ == '__main__':
         print(len(model(img, img)))
         del model
     for config in configs:
-        run(config)
+        max_accs.append(run(config))
+
+
+    print(max_accs)
         #

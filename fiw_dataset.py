@@ -100,12 +100,12 @@ def get_data_kfold(k=5):
         yield train, train_person_to_images_map, val, val_person_to_images_map
 
 
-def get_data(extension=False,kinfacew = False):
+def get_data(val_famillies, extension=False,kinfacew = False):
     train_file_path = "Faces_in_the_Wild/train_relationships.csv"
     train_file_path_ext = 'KinFaceW-II/kfacew_2.csv'
 
     train_folders_path = "Faces_in_the_Wild/train/"
-    val_famillies = "F09"
+
 
     all_images = glob(train_folders_path + "*/*/*.jpg")
     all_images = [x.replace('\\', '/') for x in all_images]
