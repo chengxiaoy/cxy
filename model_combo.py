@@ -412,7 +412,7 @@ class CusRandomSampler(Sampler):
 
             if self.use_srs:
                 even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-                queue = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                queue = [x for x in range(2 * self.relation_sizes) if x % 2 == 0] * 3
                 res = []
                 for i in range(self.iter_num):
                     same_size = self.batch_size // 2
