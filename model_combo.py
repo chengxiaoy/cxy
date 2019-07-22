@@ -48,7 +48,7 @@ class Config():
     drop_out_rate = 0.3
 
     use_random_erasing = True
-    replacement_sampling = True
+    replacement_sampling = False
 
     use_resnet = True
 
