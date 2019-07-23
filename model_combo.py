@@ -48,7 +48,7 @@ class Config():
     drop_out_rate = 0.3
 
     use_random_erasing = True
-    replacement_sampling = True
+    replacement_sampling = False
 
     use_resnet = True
 
@@ -522,7 +522,7 @@ def run(config):
 if __name__ == '__main__':
 
     configs = []
-    for i in range(10):
+    for i in [3,9]:
         val_families = 'F0' + str(i)
         config = Config()
         config.val_families = val_families
