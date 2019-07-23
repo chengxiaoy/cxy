@@ -211,8 +211,8 @@ class FaceDataSet(Dataset):
             while True:
                 p1, p4 = sample(self.label_images_map.keys(), 2)
 
-                if len(self.label_images_map[p1]) <= 1 or len(self.label_images_map[p4]) <= 1:
-                    continue
+                # if len(self.label_images_map[p1]) <= 1 or len(self.label_images_map[p4]) <= 1:
+                #     continue
                 # if 'fd' in p1 or 'fs' in p1 or 'md' in p1 or 'ms' in p1:
                 #     continue
                 # if 'fd' in p4 or 'fs' in p4 or 'md' in p4 or 'ms' in p4:
