@@ -52,7 +52,7 @@ class Config():
 
     use_resnet = True
 
-    use_data_extension = False
+    use_data_extension = True
     use_kinfacew = False
 
     pooling_method = 'avg'
