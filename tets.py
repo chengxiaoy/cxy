@@ -576,7 +576,7 @@ if __name__ == '__main__':
         img = loader('face.jpg', 'train', config.use_random_erasing)
         img = img.unsqueeze(dim=0).to(device)
         model = SiameseNetwork(config=config).to(device)
-        print(len(model(img, img)))
+        print(len(model(img, img, torch.LongTensor([[1]]))))
         del model
     for config in configs:
         max_accs.append(run(config))
