@@ -330,6 +330,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                 target = target.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
+                    label = []
                     if config.loss == 'binary':
                         output, output_ = model(img1, img2, target)
                         if center_loss:
@@ -576,7 +577,7 @@ if __name__ == '__main__':
         img = loader('face.jpg', 'train', config.use_random_erasing)
         img = img.unsqueeze(dim=0).to(device)
         model = SiameseNetwork(config=config).to(device)
-        print(len(model(img, img, torch.LongTensor([[1]]))))
+        print(len(model(img, img, torch.LongTensor([[1]]).to(device))))
         del model
     for config in configs:
         max_accs.append(run(config))
