@@ -349,7 +349,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         label = output > 0.5
                     elif config.loss == 'am-softmax' or config.loss == 'arcface':
                         target = target.squeeze().long()
-                        output,theta = model(img1, img2, target)
+                        output, theta = model(img1, img2, target)
                         loss = criterion(output, target)
                         if phase == 'train':
                             loss.backward()
@@ -580,7 +580,7 @@ if __name__ == '__main__':
     config4 = Config()
     config4.loss = 'binary'
     config4.name = 'binary'
-    configs = [ config2, config3, config4,config1]
+    configs = [config3, config4, config1, config2 ]
 
     max_accs = []
     for config in configs:
