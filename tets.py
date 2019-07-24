@@ -348,6 +348,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         output = output.data.cpu().numpy()
                         label = output > 0.5
                     elif config.loss == 'am-softmax' or config.loss == 'arcface':
+                        target = target.squeeze().long()
                         output = model(img1, img2, target)
                         loss, theta = criterion(output, target)
                         if phase == 'train':
@@ -356,6 +357,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         running_loss = running_loss + loss.item()
                         label = torch.max(theta.data, 1)[1]
                     elif config.loss == 'a-softmax':
+                        target = target.squeeze().long()
                         output = model(img1, img2, target)
                         loss = criterion(output, target)
                         if phase == 'train':
