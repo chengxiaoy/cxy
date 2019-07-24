@@ -195,7 +195,7 @@ class SiameseNetwork(nn.Module):
         else:
             return self.forward_baseline(input1, input2)
 
-    def forward_baseline(self, input1, input2):
+    def forward_baseline(self, input1, input2, target):
         """
         baseline op for compare two input
         :param input1:
@@ -228,10 +228,15 @@ class SiameseNetwork(nn.Module):
         x_ = self.relu(x)
         if self.config.use_drop_out:
             x_ = self.dropout(x_)
-        x = self.ll2(x_)
-        if self.config.loss == 'a-softmax' or self.config.loss == 'am-softmax' or self.config.loss == 'arcface':
+
+        if self.config.loss == 'a-softmax':
+            x = self.ll2(x_)
+            return x
+        elif self.config.loss == 'am-softmax' or self.config.loss == 'arcface':
+            x = self.ll2(x_, target)
             return x
         elif self.config.loss == 'binary':
+            x = self.ll2(x_)
             x = self.sigmod(x)
             return x, x_
 
