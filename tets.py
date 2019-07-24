@@ -349,8 +349,8 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         label = output > 0.5
                     elif config.loss == 'am-softmax' or config.loss == 'arcface':
                         target = target.squeeze().long()
-                        output = model(img1, img2, target)
-                        loss, theta = criterion(output, target)
+                        output,theta = model(img1, img2, target)
+                        loss = criterion(output, target)
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()
@@ -367,12 +367,20 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         label = torch.max(output[0].data, 1)[1]
 
                     for i, j in zip(label, target.data.cpu().numpy()):
-                        if i[0] == j[0]:
-                            running_corrects += 1
-                        elif i[0]:
-                            true_negative += 1
+                        if len(label.shape) == 1:
+                            if i == j:
+                                running_corrects += 1
+                            elif i:
+                                true_negative += 1
+                            else:
+                                false_positive += 1
                         else:
-                            false_positive += 1
+                            if i[0] == j[0]:
+                                running_corrects += 1
+                            elif i[0]:
+                                true_negative += 1
+                            else:
+                                false_positive += 1
 
             epoch_true_negative[phase] = true_negative / (epoch_nums[phase] * Config.train_batch_size)
             epoch_false_positive[phase] = false_positive / (epoch_nums[phase] * Config.train_batch_size)
