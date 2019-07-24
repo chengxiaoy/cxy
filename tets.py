@@ -189,11 +189,11 @@ class SiameseNetwork(nn.Module):
 
         return torch.mul(input, input_sw2)
 
-    def forward(self, input1, input2):
+    def forward(self, input1, input2, target):
         if self.config.use_bilinear:
             return self.forward_compact_bilinear(input1, input2)
         else:
-            return self.forward_baseline(input1, input2)
+            return self.forward_baseline(input1, input2, target)
 
     def forward_baseline(self, input1, input2, target):
         """
@@ -331,7 +331,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     if config.loss == 'binary':
-                        output, output_ = model(img1, img2)
+                        output, output_ = model(img1, img2, target)
                         if center_loss:
                             bce_loss = criterion(output, target)
                             target_ = target.squeeze()
@@ -347,7 +347,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         output = output.data.cpu().numpy()
                         label = output > 0.5
                     elif config.loss == 'am-softmax' and config.loss == 'arcface':
-                        output = model(img1, img2)
+                        output = model(img1, img2, target)
                         loss, theta = criterion(output, target)
                         if phase == 'train':
                             loss.backward()
@@ -355,7 +355,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         running_loss = running_loss + loss.item()
                         label = torch.max(theta.data, 1)[1]
                     elif config.loss == 'a-softmax':
-                        output = model(img1, img2)
+                        output = model(img1, img2, target)
                         loss = criterion(output, target)
                         if phase == 'train':
                             loss.backward()
