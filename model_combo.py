@@ -50,7 +50,7 @@ class Config():
     use_random_erasing = True
     replacement_sampling = False
 
-    use_resnet = True
+    use_resnet = False
 
     use_data_extension = False
     use_kinfacew = False
@@ -522,7 +522,7 @@ def run(config):
 if __name__ == '__main__':
 
     configs = []
-    for i in [3,9]:
+    for i in range(10):
         val_families = 'F0' + str(i)
         config = Config()
         config.val_families = val_families
