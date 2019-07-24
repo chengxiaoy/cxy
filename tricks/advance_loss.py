@@ -53,8 +53,8 @@ class CusAngleLinear(nn.Module):
         k = (self.m * theta / math.pi).floor()
         n_one = k * 0.0 - 1
         phi_theta = (n_one ** k) * cos_m_theta - 2 * k
-        cos_theta = cos_theta * x_len
-        phi_theta = phi_theta * x_len
+        # cos_theta = cos_theta * x_len
+        # phi_theta = phi_theta * x_len
         return cos_theta, phi_theta
 
 
