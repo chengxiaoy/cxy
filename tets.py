@@ -64,7 +64,7 @@ class Config():
     val_families = 'F09'
 
     loss = 'binary'  # 'a-softmax' 'am-softmax' 'arcface'
-
+    a_softmax_m = 4
     name = 'default'
 
 
@@ -137,7 +137,7 @@ class SiameseNetwork(nn.Module):
             if config.loss == 'binary':
                 self.ll2 = nn.Linear(100, 1)
             elif config.loss == 'a-softmax':
-                self.ll2 = CusAngleLinear(100, 2)
+                self.ll2 = CusAngleLinear(100, 2, m=config.a_softmax_m)
             elif config.loss == 'am-softmax':
                 self.ll2 = Am_softmax(100, 2)
             elif config.loss == 'arcface':
@@ -566,21 +566,24 @@ def run(config):
 if __name__ == '__main__':
 
     config1 = Config()
-    config1.loss = 'arcface'
-    config1.name = 'arcface'
+    config1.loss = 'a-softmax'
+    config1.a_softmax_m = 2
+    config1.name = 'a-softmax'
 
     config2 = Config()
-    config2.loss = 'am-softmax'
-    config2.name = 'am-softmax'
+    config2.loss = 'a-softmax'
+    config2.a_softmax_m = 3
+    config2.name = 'a-softmax'
 
     config3 = Config()
     config3.loss = 'a-softmax'
+    config3.a_softmax_m = 4
     config3.name = 'a-softmax'
 
     config4 = Config()
     config4.loss = 'binary'
     config4.name = 'binary'
-    configs = [config3, config4, config1, config2 ]
+    configs = [config3, config4, config1, config2]
 
     max_accs = []
     for config in configs:
