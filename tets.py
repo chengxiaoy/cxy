@@ -347,7 +347,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                         running_loss = running_loss + loss.item()
                         output = output.data.cpu().numpy()
                         label = output > 0.5
-                    elif config.loss == 'am-softmax' and config.loss == 'arcface':
+                    elif config.loss == 'am-softmax' or config.loss == 'arcface':
                         output = model(img1, img2, target)
                         loss, theta = criterion(output, target)
                         if phase == 'train':
