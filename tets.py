@@ -583,7 +583,7 @@ if __name__ == '__main__':
     config4 = Config()
     config4.loss = 'binary'
     config4.name = 'binary'
-    configs = [config3, config4, config1, config2]
+    configs = [config1, config2, config3, config4]
 
     max_accs = []
     for config in configs:
