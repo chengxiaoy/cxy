@@ -568,17 +568,17 @@ if __name__ == '__main__':
     config1 = Config()
     config1.loss = 'a-softmax'
     config1.a_softmax_m = 2
-    config1.name = 'a-softmax'
+    config1.name = 'a-softmax_2'
 
     config2 = Config()
     config2.loss = 'a-softmax'
     config2.a_softmax_m = 3
-    config2.name = 'a-softmax'
+    config2.name = 'a-softmax_3'
 
     config3 = Config()
     config3.loss = 'a-softmax'
     config3.a_softmax_m = 4
-    config3.name = 'a-softmax'
+    config3.name = 'a-softmax_4'
 
     config4 = Config()
     config4.loss = 'binary'
