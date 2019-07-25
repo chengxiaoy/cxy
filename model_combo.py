@@ -552,7 +552,12 @@ if __name__ == '__main__':
     config3.kin_pair_rate = 0.25
     config3.name = 'dp0_3'
 
-    configs = [config3, config1, config2, config4]
+    config5 = Config()
+    config5.train_batch_size = 8
+    config5.val_batch_size = 8
+    config5.name = 'bs_8'
+
+    configs = [config5, config3, config1, config2, config4]
 
     max_accs = []
     for config in configs:
