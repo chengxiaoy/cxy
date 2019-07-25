@@ -65,6 +65,8 @@ class Config():
 
     val_families = 'F09'
 
+    kin_pair_rate = 0.5
+
     name = 'default'
 
 
@@ -389,13 +391,14 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
 
 class CusRandomSampler(Sampler):
 
-    def __init__(self, batch_size, iter_num, relation_sizes, replacement=False):
+    def __init__(self, batch_size, iter_num, relation_sizes, replacement=False, same_pair_rate=0.5):
         super(CusRandomSampler, self).__init__(data_source=None)
         self.batch_size = batch_size
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
         self.replacement = replacement
         self.use_srs = False
+        self.same_pair_rate = same_pair_rate
 
     def __iter__(self):
         if not self.replacement:
@@ -404,7 +407,8 @@ class CusRandomSampler(Sampler):
             even_list = even_list * 6
             res = []
             for i in range(self.iter_num):
-                same_size = self.batch_size // 2
+                same_size = int(self.batch_size * self.same_pair_rate)
+
                 res.extend(even_list[i * same_size:(i + 1) * same_size])
                 res.extend([1] * (self.batch_size - same_size))
             return iter(res)
@@ -430,7 +434,7 @@ class CusRandomSampler(Sampler):
                 even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
                 res = []
                 for i in range(self.iter_num):
-                    same_size = self.batch_size // 4
+                    same_size = int(self.batch_size * self.same_pair_rate)
                     res.extend(sample(even_list, same_size))
                     res.extend([1] * (self.batch_size - same_size))
                 return iter(res)
@@ -449,7 +453,8 @@ def run(config):
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
                                   sampler=CusRandomSampler(Config.train_batch_size, 200, len(train),
-                                                           config.replacement_sampling)
+                                                           config.replacement_sampling,
+                                                           same_pair_rate=config.kin_pair_rate)
                                   )
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
@@ -529,22 +534,25 @@ if __name__ == '__main__':
     #     config.name = val_families
     #     configs.append(config)
 
-    config3 = Config()
-    config3.drop_out_rate = 0.3
-    config3.name = 'dp0_3'
-
-
     config1 = Config()
     config1.drop_out_rate = 0.1
+    config1.kin_pair_rate = 0.25
     config1.name = 'dp0_1'
 
     config2 = Config()
     config2.drop_out_rate = 0.2
+    config2.kin_pair_rate = 0.25
     config2.name = 'dp0_2'
 
-    configs = [config3,config1,config2]
+    config4 = Config()
+    config4.name = 'baseline'
 
+    config3 = Config()
+    config3.drop_out_rate = 0.3
+    config3.kin_pair_rate = 0.25
+    config3.name = 'dp0_3'
 
+    configs = [config3, config1, config2, config4]
 
     max_accs = []
     for config in configs:
