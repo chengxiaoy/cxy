@@ -48,7 +48,7 @@ class Config():
     drop_out_rate = 0.3
 
     use_random_erasing = True
-    replacement_sampling = False
+    replacement_sampling = True
 
     use_resnet = False
 
@@ -430,7 +430,7 @@ class CusRandomSampler(Sampler):
                 even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
                 res = []
                 for i in range(self.iter_num):
-                    same_size = self.batch_size // 2
+                    same_size = self.batch_size // 4
                     res.extend(sample(even_list, same_size))
                     res.extend([1] * (self.batch_size - same_size))
                 return iter(res)
@@ -521,13 +521,30 @@ def run(config):
 
 if __name__ == '__main__':
 
-    configs = []
-    for i in range(10):
-        val_families = 'F0' + str(i)
-        config = Config()
-        config.val_families = val_families
-        config.name = val_families
-        configs.append(config)
+    # configs = []
+    # for i in range(10):
+    #     val_families = 'F0' + str(i)
+    #     config = Config()
+    #     config.val_families = val_families
+    #     config.name = val_families
+    #     configs.append(config)
+
+    config3 = Config()
+    config3.drop_out_rate = 0.3
+    config3.name = 'dp0_3'
+
+
+    config1 = Config()
+    config1.drop_out_rate = 0.1
+    config1.name = 'dp0_1'
+
+    config2 = Config()
+    config2.drop_out_rate = 0.2
+    config2.name = 'dp0_2'
+
+
+
+
 
     max_accs = []
     for config in configs:
