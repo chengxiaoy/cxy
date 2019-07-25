@@ -542,7 +542,7 @@ if __name__ == '__main__':
     config2.drop_out_rate = 0.2
     config2.name = 'dp0_2'
 
-
+    configs = [config3,config1,config2]
 
 
 
