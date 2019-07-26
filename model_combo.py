@@ -50,7 +50,7 @@ class Config():
     use_random_erasing = True
     replacement_sampling = True
 
-    use_resnet = False
+    use_resnet = True
 
     use_data_extension = False
     use_kinfacew = False
