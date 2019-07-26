@@ -340,7 +340,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num
                     for i, j in zip(label, target.data.cpu().numpy()):
                         if i[0] == j[0]:
                             running_corrects += 1
-                        elif i[0]:
+                        elif j[0]:
                             true_negative += 1
                         else:
                             false_positive += 1
