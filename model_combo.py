@@ -526,38 +526,18 @@ def run(config):
 
 if __name__ == '__main__':
 
-    # configs = []
-    # for i in range(10):
-    #     val_families = 'F0' + str(i)
-    #     config = Config()
-    #     config.val_families = val_families
-    #     config.name = val_families
-    #     configs.append(config)
+    configs = []
+    for i in range(10):
+        val_families = 'F0' + str(i)
+        config = Config()
+        config.val_families = val_families
+        config.name = val_families
+        config.train_batch_size = 8
+        config.val_batch_size = 8
+        configs.append(config)
 
-    config1 = Config()
-    config1.drop_out_rate = 0.1
-    config1.kin_pair_rate = 0.25
-    config1.name = 'dp0_1'
 
-    config2 = Config()
-    config2.drop_out_rate = 0.2
-    config2.kin_pair_rate = 0.25
-    config2.name = 'dp0_2'
 
-    config4 = Config()
-    config4.name = 'baseline'
-
-    config3 = Config()
-    config3.drop_out_rate = 0.3
-    config3.kin_pair_rate = 0.25
-    config3.name = 'dp0_3'
-
-    config5 = Config()
-    config5.train_batch_size = 8
-    config5.val_batch_size = 8
-    config5.name = 'bs_8'
-
-    configs = [config5, config3, config1, config2, config4]
 
     max_accs = []
     for config in configs:
