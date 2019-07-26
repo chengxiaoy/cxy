@@ -14,7 +14,7 @@ import torch
 import torch.nn.functional as F
 import time
 import copy
-from torch.optim import Adam
+from torch.optim import Adam, RMSprop
 from fiw_dataset import *
 from torch.utils.data import RandomSampler, Sampler
 
@@ -25,11 +25,10 @@ from datetime import datetime
 import math
 from submit import *
 from tricks.tricks import *
-from tricks.advance_loss import AngleLinear, AngleLoss, CusAngleLinear, CusAngleLoss, Am_softmax
+from tricks.advance_pool import *
 
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
-writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S')))
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -37,9 +36,39 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Config():
     train_batch_size = 16
     val_batch_size = 16
+    # concate or bilinear
+    use_bilinear = False
+
+    # conv trick
+    use_spatial_attention = False
+    use_se = False
+    use_stack = False
+    use_model_ensemble = False
+    use_drop_out = True
+    drop_out_rate = 0.3
+
+    use_random_erasing = True
+    replacement_sampling = True
+
+    use_resnet = False
+
+    use_data_extension = False
+    use_kinfacew = False
+
+    pooling_method = 'avg'
+
+    optimizer = 'adam'
+    adam_amsgrad = True
+
+    lr_scheduler = 'default'
+    weight_decay = 0.0
+
+    val_families = 'F09'
+
+    name = 'default'
 
 
-def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='senet50'):
+def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name='resnet50'):
     if pretrain_kind == 'vggface2':
         N_IDENTITY = 8631  # the number of identities in VGGFace2 for which ResNet and SENet are trained
         resnet50_weight_file = 'weights/resnet50_ft_weight.pkl'
@@ -60,48 +89,82 @@ def get_pretrained_model(include_top=False, pretrain_kind='imagenet', model_name
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, include_top=False):
+    def __init__(self, config):
         super(SiameseNetwork, self).__init__()
-        self.pretrained_model = get_pretrained_model(include_top, pretrain_kind='vggface2')
+        self.config = config
 
-        # self.pretrained_model2 = get_pretrained_model(include_top, pretrain_kind='vggface2', model_name='senet50')
-        self.ll1 = nn.Linear(4096, 100)
-        self.relu = nn.ReLU()
-        self.sigmod = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.3)
-        self.ll2 = nn.Linear(100, 2)
-        self.am_softmax = Am_softmax(100, 2)
-        # self.a_softmax = AngleLinear(100, 2)
+        if self.config.use_resnet:
+            self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2', model_name='resnet50')
+        else:
+            self.pretrained_model = get_pretrained_model(False, pretrain_kind='vggface2', model_name='senet50')
 
-        # self.bilinear = nn.Bilinear(512, 512, 1024)
-        # self.lll = nn.Linear(1024, 50)
-        # self.ll = nn.Linear(1024, 100)
-        #
-        # self.ll3 = nn.Linear(100, 1)
-        #
-        # self.conv = nn.Conv2d(2048, 512, 1)
+        if self.config.use_bilinear:
+            self.bi_conv = nn.Conv2d(2048, 512, 1)
+            self.bi_bn = nn.BatchNorm2d(512)
+            self.bi_rule = nn.ReLU(0.1)
+            self.bilinear = nn.Bilinear(512, 512, 1024)
+            if self.config.use_spatial_attention:
+                self.conv_sw1 = nn.Conv2d(512, 50, 1)
+                self.sw1_bn = nn.BatchNorm2d(50)
+                self.sw1_activation = nn.ReLU()
 
-        # self.stn = STNLayer()
+                self.conv_sw2 = nn.Conv2d(50, 1, 1)
+                self.sw2_activation = nn.Softplus()
+            if self.config.use_se:
+                self.selayer = SELayer(512)
+            self.ll1 = nn.Linear(1024, 50)
+            self.relu = nn.ReLU()
+            self.sigmod = nn.Sigmoid()
+            self.dropout1 = nn.Dropout(self.config.drop_out_rate)
+            self.dropout2 = nn.Dropout(self.config.drop_out_rate)
+            self.ll2 = nn.Linear(50, 1)
 
-        # self.selayer = SELayer(512)
-        self.globalavg = nn.AdaptiveAvgPool2d(1)
-        self.globalmax = nn.AdaptiveMaxPool2d(1)
+        else:
+            if self.config.use_spatial_attention:
+                self.conv_sw1 = nn.Conv2d(2048, 50, 1)
+                self.sw1_bn = nn.BatchNorm2d(50)
+                self.sw1_activation = nn.ReLU()
 
-        # self.dropout2 = nn.Dropout(0.3)
-        # self.bn1 = nn.BatchNorm2d(512)
-        #
-        # self.conv_sw1 = nn.Conv2d(512, 50, 1)
-        # self.sw1_bn = nn.BatchNorm2d(50)
-        # self.sw1_activation = nn.ReLU()
-        #
-        # self.conv_sw2 = nn.Conv2d(50, 1, 1)
-        # self.sw2_activation = nn.Softplus()
-    #
-    def forward_once(self, input):
+                self.conv_sw2 = nn.Conv2d(50, 1, 1)
+                self.sw2_activation = nn.Softplus()
+            if self.config.use_se:
+                self.selayer = SELayer(2048)
+            self.ll1 = nn.Linear(4096, 100)
+            # self.ll3 = nn.Linear(512, 64)
+            self.relu = nn.ReLU()
+            self.sigmod = nn.Sigmoid()
+            self.dropout = nn.Dropout(self.config.drop_out_rate)
+            self.ll2 = nn.Linear(100, 1)
+
+        if self.config.pooling_method == 'avg':
+            self.pool = nn.AdaptiveAvgPool2d(1)
+        elif self.config.pooling_method == 'max':
+            self.pool = nn.AdaptiveMaxPool2d(1)
+        elif self.config.pooling_method == 'rmac':
+            self.pool = rmac
+        elif self.config.pooling_method == 'gem':
+            self.pool = gem
+
+        self.maxpool = nn.AdaptiveMaxPool2d(1)
+
+        if self.config.use_stack:
+            self.reduce_conv1 = nn.Conv2d(4096, 4096, 3)
+            self.reduce_conv2 = nn.Conv2d(4096, 4096, 3)
+            self.reduce_conv3 = nn.Conv2d(4096, 4096, 3)
+
+    def forward_once(self, x):
         # input = self.stn(input)
-        x = self.pretrained_model(input)
-        # x_1 = self.pretrained_model2(input)
-        # x = torch.cat([x, x_1], 1)
+        x = self.pretrained_model(x)
+        if self.config.use_bilinear:
+            x = self.bi_conv(x)
+            x = self.bi_bn(x)
+            x = self.bi_rule(x)
+        if self.config.use_se:
+            x = self.selayer(x)
+
+        if self.config.use_spatial_attention:
+            x = self.forward_spatial_weight(x)
+
         return x
 
     def forward_spatial_weight(self, input):
@@ -119,11 +182,13 @@ class SiameseNetwork(nn.Module):
 
         return torch.mul(input, input_sw2)
 
-    def forward(self, input1, input2, label):
-        return self.forward_baseline(input1, input2, label)
-        # return self.forward_compact_bilinear(input1, input2, label)
+    def forward(self, input1, input2):
+        if self.config.use_bilinear:
+            return self.forward_compact_bilinear(input1, input2)
+        else:
+            return self.forward_baseline(input1, input2)
 
-    def forward_baseline(self, input1, input2, label):
+    def forward_baseline(self, input1, input2):
         """
         baseline op for compare two input
         :param input1:
@@ -131,82 +196,84 @@ class SiameseNetwork(nn.Module):
         :return:
         """
         output1 = self.forward_once(input1)
-        # if visual_info[0]:
-        #     x = vutils.make_grid(output1[:, :3, :, :], normalize=True, scale_each=True)
-        #     writer.add_image('Image', x, visual_info[1])
-
         output2 = self.forward_once(input2)
-        # output1 = self.forward_spatial_weight(output1)
-        # output2 = self.forward_spatial_weight(output2)
-        # globalmax = nn.AdaptiveMaxPool2d(1)
-        globalavg = nn.AdaptiveAvgPool2d(1)
 
-        output1 = globalavg(output1)
-        output2 = globalavg(output2)
+        # max1 = self.maxpool(output1)
+        # max2 = self.maxpool(output2)
 
-        # output1 = torch.cat([globalavg(output1), globalavg(output1)], 1)
-        # output2 = torch.cat([globalavg(output2), globalavg(output2)], 1)
+        output1 = self.pool(output1)
+        output2 = self.pool(output2)
 
         # (x1-x2)**2
         sub = torch.sub(output1, output2)
         mul1 = torch.mul(sub, sub)
 
-        # x = mul1.view(mul1.size(0),-1)
-
         # (x1**2-x2**2)
         mul2 = torch.sub(torch.mul(output1, output1), torch.mul(output2, output2))
-        # x1*x2
-        # mul2 = torch.mul(output1, output2)
+
+        # mul1 = torch.cat([max1, output1], 1)
+        # mul2 = torch.cat([max2, output2], 1)
 
         x = torch.cat([mul1, mul2], 1)
         x = x.view(x.size(0), -1)
 
         x = self.ll1(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.am_softmax(x,label)
-        # x = self.sigmod(x)
+        x_ = self.relu(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout(x_)
+        x = self.ll2(x_)
+        x = self.sigmod(x)
+        return x, x_
 
-        return x
-
-    def forward_compact_bilinear(self, input1, input2, label):
+    def forward_compact_bilinear(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-        output1 = self.conv(output1)
-        output2 = self.conv(output2)
-        output1 = self.bn1(output1)
-        output2 = self.bn1(output2)
-        output1 = self.relu(output1)
-        output2 = self.relu(output2)
-
-        # output1 = self.selayer(output1)
-        # output2 = self.selayer(output2)
-
-        output1 = self.forward_spatial_weight(output1)
-        output2 = self.forward_spatial_weight(output2)
-        output1 = self.globalavg(output1)
-        output2 = self.globalavg(output2)
+        output1 = self.pool(output1)
+        output2 = self.pool(output2)
 
         output1 = output1.view(output1.size(0), -1)
         output2 = output2.view(output2.size(0), -1)
 
         x = self.bilinear(output1, output2)
         x = self.relu(x)
-        x = self.dropout2(x)
+        if self.config.use_drop_out:
+            x = self.dropout1(x)
 
-        x = self.lll(x)
-        x = self.relu(x)
-        x_ = self.dropout(x)
+        x = self.ll1(x)
+        x_ = self.relu(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout2(x_)
 
         x = self.ll2(x_)
+        x = self.sigmod(x)
+        return x, x_
+
+    def forward_use_stack(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+
+        output = torch.cat([output1, output2], dim=1)
+        output = self.reduce_conv1(output)
+        output = self.reduce_conv2(output)
+        output = self.reduce_conv3(output)
+
+        output = self.pool(output)
+        output = output.view(output.size(0), -1)
+
+        x = self.ll1(output)
+        x_ = self.relu(x)
+        if self.config.use_drop_out:
+            x_ = self.dropout(x_)
+        x = self.ll2(x_)
+        x = self.sigmod(x)
         return x, x_
 
     def __repr__(self):
         return self.__class__.__name__
 
 
-def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=200, center_loss=None):
+def train_model(model, criterion, optimizer, scheduler, dataloaders, writer, num_epochs=200, center_loss=None):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -232,12 +299,9 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 # scheduler.step()
                 model.train()  # Set model to training mode
                 # model.apply(set_batchnorm_eval)
-                criterion.train()
-                print(criterion.training)
             else:
                 model.eval()  # Set model to evaluate mode
-                criterion.eval()
-                print(criterion.training)
+
             running_loss = 0.0
             running_corrects = 0
             true_negative = 0
@@ -249,31 +313,32 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
                 img1 = img1.to(device)
                 img2 = img2.to(device)
                 target = target.to(device)
-                target = target.squeeze().long()
-
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     vision_info = [False, epoch]
                     if phase == 'val' and i == 10:
                         vision_info[0] = True
                         vision_info[1] = i * epoch
-                    output = model(img1, img2, target)
-                    loss = criterion(output[0], target)
-                    if center_loss is not None:
-                        centerloss = center_loss(target, output[1])
-                        loss = loss + 0.05 * centerloss
+                    output, output_ = model(img1, img2)
+
+                    if center_loss:
+                        bce_loss = criterion(output, target)
+                        target_ = target.squeeze()
+                        centerloss = center_loss(target_, output_)
+                        loss = bce_loss + 0.05 * centerloss
+                    else:
+                        loss = criterion(output, target)
+
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-
-                    _, predicted = torch.max(output[1].data, 1)
-
                     running_loss = running_loss + loss.item()
-
-                    for i, j in zip(predicted, target.data.cpu().numpy()):
-                        if i == j:
+                    output = output.data.cpu().numpy()
+                    label = output > 0.5
+                    for i, j in zip(label, target.data.cpu().numpy()):
+                        if i[0] == j[0]:
                             running_corrects += 1
-                        elif i:
+                        elif j[0]:
                             true_negative += 1
                         else:
                             false_positive += 1
@@ -319,53 +384,83 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
     # save model
     torch.save(model.state_dict(), str(model) + ".pth")
 
-    return model
+    return max_acc
 
 
 class CusRandomSampler(Sampler):
 
-    def __init__(self, batch_size, iter_num, relation_sizes):
+    def __init__(self, batch_size, iter_num, relation_sizes, replacement=False):
         super(CusRandomSampler, self).__init__(data_source=None)
         self.batch_size = batch_size
         self.iter_num = iter_num
         self.relation_sizes = relation_sizes
+        self.replacement = replacement
+        self.use_srs = False
 
     def __iter__(self):
-        even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
-        # random.shuffle(even_list)
-        # even_list = even_list * 6
-        res = []
-        for i in range(self.iter_num):
-            same_size = self.batch_size // 2
+        if not self.replacement:
+            even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+            random.shuffle(even_list)
+            even_list = even_list * 6
+            res = []
+            for i in range(self.iter_num):
+                same_size = self.batch_size // 2
+                res.extend(even_list[i * same_size:(i + 1) * same_size])
+                res.extend([1] * (self.batch_size - same_size))
+            return iter(res)
+        else:
 
-            res.extend(sample(even_list, same_size))
-            # res.extend(even_list[i * same_size:(i + 1) * same_size])
-            res.extend([1] * (self.batch_size - same_size))
+            if self.use_srs:
+                even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                queue = [x for x in range(2 * self.relation_sizes) if x % 2 == 0] * 3
+                res = []
+                for i in range(self.iter_num):
+                    same_size = self.batch_size // 2
+                    sm = sample(even_list, same_size)
+                    res.extend(sm)
+                    for ele in sm:
+                        even_list.remove(ele)
+                    even_list.extend(queue[i * same_size:(i + 1) * same_size])
 
-        return iter(res)
+                    res.extend([1] * (self.batch_size - same_size))
+                return iter(res)
+
+
+            else:
+                even_list = [x for x in range(2 * self.relation_sizes) if x % 2 == 0]
+                res = []
+                for i in range(self.iter_num):
+                    same_size = self.batch_size // 4
+                    res.extend(sample(even_list, same_size))
+                    res.extend([1] * (self.batch_size - same_size))
+                return iter(res)
 
     def __len__(self):
         return self.batch_size * self.iter_num
 
 
-if __name__ == '__main__':
-    train, train_map, val, val_map = get_data()
+def run(config):
+    writer = SummaryWriter(logdir=os.path.join("../tb_log", datetime.now().strftime('%b%d_%H-%M-%S') + config.name))
+    train, train_map, val, val_map = get_data(config.val_families, config.use_data_extension, config.use_kinfacew)
 
-    datasets = {'train': FaceDataSet(train, train_map, 'train', False), 'val': FaceDataSet(val, val_map, 'val', False)}
+    datasets = {'train': FaceDataSet(train, train_map, 'train', config.use_random_erasing),
+                'val': FaceDataSet(val, val_map, 'val', config.use_random_erasing)}
 
     train_dataloader = DataLoader(dataset=datasets['train'], num_workers=4,
                                   batch_size=Config.train_batch_size,
-                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train))
+                                  sampler=CusRandomSampler(Config.train_batch_size, 200, len(train),
+                                                           config.replacement_sampling)
                                   )
 
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
-                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val)),
+                                sampler=CusRandomSampler(Config.train_batch_size, 100, len(val),
+                                                         config.replacement_sampling),
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
 
-    model = SiameseNetwork(False).to(device)
+    model = SiameseNetwork(config=config).to(device)
 
     # weights = []
     # for i in range(Config.train_batch_size // 2):
@@ -374,9 +469,8 @@ if __name__ == '__main__':
     #     weights.append([1.0])
     # weights = torch.Tensor(weights).to(device)
     # criterion = nn.BCELoss(weights)
-    criterion = nn.CrossEntropyLoss()
-    # criterion = AngleLoss()
-    # criterion = CusAngleLinearLoss(50, 2).to(device)
+    # criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCELoss()
 
     optim_params = []
 
@@ -393,19 +487,74 @@ if __name__ == '__main__':
     #             frozen = True
     #     if not frozen:
     #         optim_params.append(params)
-
-    optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=False)
+    optimizer = None
+    if config.optimizer == 'adam':
+        optimizer = Adam(model.parameters(), lr=0.00001, amsgrad=config.adam_amsgrad, weight_decay=config.weight_decay)
+    elif config.optimizer == 'rmsprop':
+        optimizer = RMSprop(model.parameters(), lr=0.0001)
     # optimizer2 = Adam(model.parameters(), lr=0.000001, amsgrad=True, weight_decay=0.1)
 
     # optimizer = Adam(model.parameters(), lr=0.00001)
     # optimizer = Adam(optim_params, lr=0.00001)
 
-    # exp_decay = math.exp(-0.01)
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [20, 60, 100], 0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1, verbose=True)
+    scheduler = None
+    if config.lr_scheduler == 'default':
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=20, factor=0.1,
+                                                               verbose=True)
+    elif config.lr_scheduler == 'cosineAnneal':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=20)
+    elif config.lr_scheduler == 'exp':
+        exp_decay = math.exp(-0.01)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200)
-    get_submit()
+    max_acc = train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=100)
+    try:
+        get_submit(model, config)
+    except Exception as e:
+        print(e)
+    del model
+    return max_acc
+
+
+if __name__ == '__main__':
+
+    # configs = []
+    # for i in range(10):
+    #     val_families = 'F0' + str(i)
+    #     config = Config()
+    #     config.val_families = val_families
+    #     config.name = val_families
+    #     configs.append(config)
+
+    config3 = Config()
+    config3.drop_out_rate = 0.3
+    config3.name = 'dp0_3'
+
+
+    config1 = Config()
+    config1.drop_out_rate = 0.1
+    config1.name = 'dp0_1'
+
+    config2 = Config()
+    config2.drop_out_rate = 0.2
+    config2.name = 'dp0_2'
+
+    configs = [config1,config2,config3]
+
+
+
+    max_accs = []
+    for config in configs:
+        img = loader('face.jpg', 'train', config.use_random_erasing)
+        img = img.unsqueeze(dim=0).to(device)
+        model = SiameseNetwork(config=config).to(device)
+        print(len(model(img, img)))
+        del model
+    for config in configs:
+        max_accs.append(run(config))
+
+    print(max_accs)
+    #
