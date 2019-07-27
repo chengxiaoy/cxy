@@ -515,7 +515,7 @@ def run(config):
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=exp_decay)
 
     # train_model(model, criterion, optimizer, scheduler, data_loaders, num_epochs=200,center_loss=CenterLoss(2, 50).to(device))
-    max_acc = train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=200)
+    max_acc = train_model(model, criterion, optimizer, scheduler, data_loaders, writer, num_epochs=10)
     try:
         get_submit(model, config)
     except Exception as e:
