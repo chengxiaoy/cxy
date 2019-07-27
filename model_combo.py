@@ -30,7 +30,7 @@ from tricks.advance_pool import *
 # from compact_bilinear_pooling import CountSketch, CompactBilinearPooling
 
 
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Config():
