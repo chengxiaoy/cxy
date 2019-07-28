@@ -50,7 +50,7 @@ class Config():
     use_random_erasing = True
     replacement_sampling = True
 
-    use_resnet = True
+    use_resnet = False
 
     use_data_extension = False
     use_kinfacew = False
@@ -532,8 +532,8 @@ if __name__ == '__main__':
         config = Config()
         config.val_families = val_families
         config.name = val_families
-        config.train_batch_size = 8
-        config.val_batch_size = 8
+        config.train_batch_size = 16
+        config.val_batch_size = 16
         configs.append(config)
 
 
