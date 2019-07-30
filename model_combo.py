@@ -460,7 +460,7 @@ def run(config):
     val_dataloader = DataLoader(dataset=datasets['val'], num_workers=4,
                                 batch_size=Config.val_batch_size,
                                 sampler=CusRandomSampler(Config.train_batch_size, 100, len(val),
-                                                         config.replacement_sampling),
+                                                         config.replacement_sampling,same_pair_rate=config.kin_pair_rate),
                                 # shuffle=True
                                 )
     data_loaders = {'train': train_dataloader, 'val': val_dataloader}
