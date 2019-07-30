@@ -534,6 +534,7 @@ if __name__ == '__main__':
         config.name = val_families
         config.train_batch_size = 16
         config.val_batch_size = 16
+        config.kin_pair_rate = 0.25
         configs.append(config)
 
 
