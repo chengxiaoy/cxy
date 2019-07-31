@@ -134,7 +134,7 @@ def get_data(val_famillies, extension=False, kinfacew=False):
     val = [x for x in relationships if val_famillies in x[0]]
 
     if extension:
-        vgg_face = pd.read_csv('submission907.csv')
+        vgg_face = pd.read_csv('submission3.csv')
         pairs = vgg_face['img_pair'][vgg_face['is_related'] > 0.9].to_numpy()
         for pair in pairs:
             pp1, pp2 = pair.split('-')
