@@ -526,16 +526,25 @@ def run(config):
 
 if __name__ == '__main__':
 
-    configs = []
-    for i in range(10):
-        val_families = 'F0' + str(i)
-        config = Config()
-        config.val_families = val_families
-        config.name = val_families
-        config.train_batch_size = 16
-        config.val_batch_size = 16
-        config.use_data_extension = True
-        configs.append(config)
+    # configs = []
+    # for i in range(10):
+    #     val_families = 'F0' + str(i)
+    #     config = Config()
+    #     config.val_families = val_families
+    #     config.name = val_families
+    #     config.train_batch_size = 16
+    #     config.val_batch_size = 16
+    #     config.use_data_extension = True
+    #     configs.append(config)
+
+    config1 = Config()
+    config1.drop_out_rate = 0.1
+    config2 = Config()
+    config2.drop_out_rate = 0.2
+    config3 = Config()
+    config3.drop_out_rate = 0.3
+
+    configs = [config1,config2,config3]
 
 
 
