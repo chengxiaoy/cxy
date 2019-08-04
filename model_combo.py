@@ -539,11 +539,13 @@ if __name__ == '__main__':
 
     config1 = Config()
     config1.drop_out_rate = 0.1
+    config1.name = 'dp0.1'
     config2 = Config()
     config2.drop_out_rate = 0.2
+    config2.name = 'dp0.2'
     config3 = Config()
     config3.drop_out_rate = 0.3
-
+    config3.name = 'dp0.3'
     configs = [config1,config2,config3]
 
 
