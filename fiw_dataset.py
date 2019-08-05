@@ -39,10 +39,10 @@ def loader(image_file, split, argument=False):
             # img = torchvision.transforms.Resize(197)(img),
             trans = torchvision.transforms.Compose([
                 torchvision.transforms.Resize(197),
-                torchvision.transforms.RandomGrayscale(p=0.2),
+                # torchvision.transforms.RandomGrayscale(p=0.2),
                 # torchvision.transforms.RandomRotation(90),
-                torchvision.transforms.RandomHorizontalFlip(0.5),
-                torchvision.transforms.RandomVerticalFlip(0.5),
+                # torchvision.transforms.RandomHorizontalFlip(0.5),
+                # torchvision.transforms.RandomVerticalFlip(0.5),
                 tricks.RandomErasing(mean=mean_rgb)
             ])
             img = trans(img)
